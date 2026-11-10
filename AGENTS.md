@@ -16,8 +16,9 @@ The field reference and deployment instructions are in [README.md](README.md).
   order. There are no hidden registration files or generated route lists.
 - Use relative paths such as `./assets/example-cover.svg`. The public
   site is `https://jdooley-clt.github.io/arcade/`; do not assume deployment at `/`.
-- Attribution: this cabinet was created by Christina Warren (@filmgirl), and
-  existing games keep her credits exactly as written. New games credit their own
+- Attribution: Created by Christina Warren ([@filmgirl](https://github.com/filmgirl)),
+  currently maintained by Jeramiah Dooley ([@jdooley-clt](https://github.com/jdooley-clt)).
+  Existing games keep her credits exactly as written. New games credit their own
   creator. Never remove or reword an existing credit.
 - Do not introduce a framework, runtime dependencies, telemetry, authentication,
   a backend, or a global leaderboard for a catalog addition.
