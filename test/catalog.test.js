@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import { gameFromHash, resolveSafeUrl, validateCatalog } from "../src/catalog.js";
 
-const base = "https://filmgirl.github.io/arcade/";
+const base = "https://jdooley-clt.github.io/arcade/";
 const catalog = JSON.parse(await readFile(new URL("../games.json", import.meta.url), "utf8"));
 
 test("shipped games validate and resolve art under the Pages project path", () => {
@@ -19,7 +19,7 @@ test("shipped games validate and resolve art under the Pages project path", () =
   assert.equal(mona.coverCharacter, `${base}assets/octocat-candy.svg`);
   assert.equal(flappy.coverArt, `${base}assets/flappy-cover.svg`);
   assert.equal(flappy.coverCharacter, `${base}assets/copilot-candy.svg`);
-  assert.equal(mona.url, "https://filmgirl.github.io/mona-maze/");
+  assert.equal(mona.url, "https://jdooley-clt.github.io/mona-maze/");
   assert.equal(flappy.viewport.layout, "portrait");
 });
 

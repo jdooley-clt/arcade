@@ -15,13 +15,16 @@ The field reference and deployment instructions are in [README.md](README.md).
 - Keep IDs stable: `#game/<id>` is a public bookmark. Catalog order is display
   order. There are no hidden registration files or generated route lists.
 - Use relative paths such as `./assets/example-cover.svg`. The public
-  site is `https://filmgirl.github.io/arcade/`; do not assume deployment at `/`.
+  site is `https://jdooley-clt.github.io/arcade/`; do not assume deployment at `/`.
+- Attribution: this cabinet was created by Christina Warren (@filmgirl), and
+  existing games keep her credits exactly as written. New games credit their own
+  creator. Never remove or reword an existing credit.
 - Do not introduce a framework, runtime dependencies, telemetry, authentication,
   a backend, or a global leaderboard for a catalog addition.
 
 ## Link games back to GitHub Arcade
 
-- Every newly registered game must link to `https://filmgirl.github.io/arcade/`
+- Every newly registered game must link to `https://jdooley-clt.github.io/arcade/`
   in both places: its standalone public page and its source repository's README
   as displayed on the GitHub repository landing page. Use a real accessible
   anchor on the standalone page, labeled **GitHub Arcade** or
