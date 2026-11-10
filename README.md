@@ -6,6 +6,17 @@ The Commit Cabinet is an ivory-and-pastel candy cabinet for GitHub-themed browse
 games. Pick a game on the recessed screen, play the original game, then return to
 the library. No accounts, build step, tracking, framework, or runtime dependencies.
 
+## Origins and credits
+
+GitHub Arcade and the Commit Cabinet were created by Christina Warren
+([@filmgirl](https://github.com/filmgirl)). The original repository is
+[filmgirl/arcade](https://github.com/filmgirl/arcade). This copy preserves its
+full commit history and is published from
+[jdooley-clt/arcade](https://github.com/jdooley-clt/arcade) so the arcade keeps
+running during her leave, maintained by
+[@jdooley-clt](https://github.com/jdooley-clt). Existing games keep their
+original credits; new games credit their own creators.
+
 ## Local preview
 
 Install Node.js 22 or newer, then run:
@@ -30,11 +41,11 @@ npm test
 
 | Game | Play | Source |
 | --- | --- | --- |
-| Mona's Merge Maze | [mona-maze](https://filmgirl.github.io/mona-maze/) | [filmgirl/mona-maze](https://github.com/filmgirl/mona-maze) |
-| Flappy Copilot | [flappy-copilot](https://filmgirl.github.io/flappy-copilot/) | [filmgirl/flappy-copilot](https://github.com/filmgirl/flappy-copilot) |
-| Mona Breaker | [mona-breaker](https://filmgirl.github.io/mona-breaker/) | [filmgirl/mona-breaker](https://github.com/filmgirl/mona-breaker) |
-| Mona Crossing | [mona-crossing](https://filmgirl.github.io/mona-crossing/) | [filmgirl/mona-crossing](https://github.com/filmgirl/mona-crossing) |
-| Mona Sweeper | [mona-sweeper](https://filmgirl.github.io/mona-sweeper/) | [filmgirl/mona-sweeper](https://github.com/filmgirl/mona-sweeper) |
+| Mona's Merge Maze | [mona-maze](https://jdooley-clt.github.io/mona-maze/) | [jdooley-clt/mona-maze](https://github.com/jdooley-clt/mona-maze) |
+| Flappy Copilot | [flappy-copilot](https://jdooley-clt.github.io/flappy-copilot/) | [jdooley-clt/flappy-copilot](https://github.com/jdooley-clt/flappy-copilot) |
+| Mona Breaker | [mona-breaker](https://jdooley-clt.github.io/mona-breaker/) | [jdooley-clt/mona-breaker](https://github.com/jdooley-clt/mona-breaker) |
+| Mona Crossing | [mona-crossing](https://jdooley-clt.github.io/mona-crossing/) | [jdooley-clt/mona-crossing](https://github.com/jdooley-clt/mona-crossing) |
+| Mona Sweeper | [mona-sweeper](https://jdooley-clt.github.io/mona-sweeper/) | [jdooley-clt/mona-sweeper](https://github.com/jdooley-clt/mona-sweeper) |
 
 The games remain in their own repositories. This project embeds them; it does not
 copy or change their implementations. The library and playing-screen headers
@@ -60,8 +71,8 @@ paddle and ball, and `assets/mona-sweeper-character.svg` reuses it with a bug
 flag and commit tile. Mona Crossing reuses the same character layer, and its cover
 includes that silhouette in an original crossing neighborhood. Its original
 game, neighborhood, cover composition, and generated sound effects are
-[MIT-licensed](https://github.com/filmgirl/mona-crossing/blob/main/LICENSE), and
-Mona Sweeper is [MIT-licensed](https://github.com/filmgirl/mona-sweeper/blob/main/LICENSE);
+[MIT-licensed](https://github.com/jdooley-clt/mona-crossing/blob/main/LICENSE), and
+Mona Sweeper is [MIT-licensed](https://github.com/jdooley-clt/mona-sweeper/blob/main/LICENSE);
 those licenses do not grant rights to GitHub artwork or trademarks. The Octocat
 design is copyright GitHub, Inc. and subject to
 [GitHub's artwork terms](https://octodex.github.com/faq/), not a license granted
@@ -189,8 +200,8 @@ own origin**; host only trusted local games. No game-to-parent messaging is used
 
 ## GitHub Pages deployment
 
-The public URL is **`https://filmgirl.github.io/arcade/`**, published from
-[`filmgirl/arcade`](https://github.com/filmgirl/arcade). GitHub Pages uses the
+The public URL is **`https://jdooley-clt.github.io/arcade/`**, published from
+[`jdooley-clt/arcade`](https://github.com/jdooley-clt/arcade). GitHub Pages uses the
 repository name as the project-site path. Keep the `arcade` name and leave the
 individual game repositories unchanged.
 

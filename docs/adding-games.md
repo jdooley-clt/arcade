@@ -12,7 +12,7 @@ manifest fields or assume the player supports them.
 Collect the following before editing the catalog:
 
 - A stable playable HTTPS URL and a source repository URL.
-- Backlinks to `https://filmgirl.github.io/arcade/` on the standalone public page
+- Backlinks to `https://jdooley-clt.github.io/arcade/` on the standalone public page
   and in the source repository's README on GitHub. Follow the
   [backlink guardrails](../AGENTS.md#link-games-back-to-github-arcade); request
   maintainer action if repository changes are outside your scope or permissions.
@@ -162,10 +162,10 @@ Use browser automation when available, but inspect the rendered result too:
       frame and stops its simulation/audio rather than merely hiding it.
 - [ ] Open game leads to the correct standalone URL.
 - [ ] The standalone page has a visible **GitHub Arcade** or **More games in
-      GitHub Arcade** anchor to `https://filmgirl.github.io/arcade/`, reachable
+      GitHub Arcade** anchor to `https://jdooley-clt.github.io/arcade/`, reachable
       by keyboard and touch without triggering gameplay.
 - [ ] The source repository's README on GitHub has a working backlink to
-      `https://filmgirl.github.io/arcade/`.
+      `https://jdooley-clt.github.io/arcade/`.
 - [ ] The embedded game avoids recursive cabinet navigation without requiring
       popups, top-level navigation, broader sandbox permissions, or messaging.
 - [ ] Phone widths, including 320px and 390px, have no horizontal page overflow.
@@ -186,7 +186,9 @@ Do not claim validation that was not performed.
 ## 6. Submit and maintain
 
 A normal PR contains the catalog entry, necessary shipping artwork, an update to
-the README game list, and any required attribution. Include a library screenshot,
+the README game list, and any required attribution. Credit the new game's own
+creator; existing games keep Christina Warren's (@filmgirl) credits exactly as
+written. Include a library screenshot,
 the real game URL, the inputs/layouts exercised, and any known limitations.
 Do not edit the test suite's expected total count every time a game is added.
 
