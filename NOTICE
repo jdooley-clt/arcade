@@ -1,0 +1,21 @@
+GitHub Arcade is licensed under the MIT License; see LICENSE.
+
+That license covers the original cabinet: its code, styles, layout and
+documentation, and the original cover compositions and favicon in assets/.
+It does not grant rights to GitHub's Octocat design or to any other GitHub
+artwork or trademarks.
+
+The adapted pixel Octocat in assets/octocat-candy.svg,
+assets/mona-breaker-character.svg, assets/mona-sweeper-character.svg, and
+assets/mona-crossing-cover.svg remains copyright GitHub, Inc. and subject
+to GitHub's artwork terms: https://octodex.github.com/faq/
+
+assets/copilot-candy.svg is a pixel rendition of the GitHub Copilot
+character, and the gameplay captures assets/flappy-copilot.png,
+assets/mona-breaker.png, assets/mona-crossing-gameplay.png,
+assets/mona-maze.png, and assets/mona-sweeper.png show the games' Octocat
+and Copilot characters and the GitHub mark as those games draw them.
+GitHub's artwork and trademarks in those files are likewise not licensed
+by this repository.
+
+Silkscreen is separately licensed under assets/fonts/OFL.txt.
