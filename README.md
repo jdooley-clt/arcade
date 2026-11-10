@@ -8,14 +8,12 @@ the library. No accounts, build step, tracking, framework, or runtime dependenci
 
 ## Origins and credits
 
-GitHub Arcade and the Commit Cabinet were created by Christina Warren
-([@filmgirl](https://github.com/filmgirl)). The original repository is
-[filmgirl/arcade](https://github.com/filmgirl/arcade). This copy preserves its
-full commit history and is published from
-[jdooley-clt/arcade](https://github.com/jdooley-clt/arcade) so the arcade keeps
-running during her leave, maintained by
-[@jdooley-clt](https://github.com/jdooley-clt). Existing games keep their
-original credits; new games credit their own creators.
+Created by Christina Warren ([@filmgirl](https://github.com/filmgirl)), currently
+maintained by Jeramiah Dooley ([@jdooley-clt](https://github.com/jdooley-clt)).
+The original repository is [filmgirl/arcade](https://github.com/filmgirl/arcade).
+This copy preserves its full commit history and is published from
+[jdooley-clt/arcade](https://github.com/jdooley-clt/arcade). Existing games keep
+their original credits; new games credit their own creators.
 
 ## Local preview
 
