@@ -84,7 +84,11 @@ function guide(game) {
     pair.append(term, element("dd", "", action));
     list.append(pair);
   }
-  fragment.append(list, element("p", "game-instructions", game.instructions));
+  const repo = element("a", "game-repo", "Source & credits ↗");
+  repo.href = game.repository;
+  repo.target = "_blank";
+  repo.rel = "noopener noreferrer";
+  fragment.append(list, element("p", "game-instructions", game.instructions), repo);
   return fragment;
 }
 
@@ -144,11 +148,6 @@ function launch(game) {
   $("player-title").textContent = game.title;
   $("compact-player-title").textContent = game.title;
   $("open-game").href = game.url;
-  const repo = element("a", "game-repo", "Game source ↗");
-  repo.href = game.repository;
-  repo.target = "_blank";
-  repo.rel = "noopener noreferrer";
-  $("instruction-content").append(repo);
   $("deck-focus").disabled = false;
   document.title = `${game.title} · GitHub Arcade`;
   mountGame(game);
