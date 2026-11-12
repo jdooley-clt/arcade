@@ -54,16 +54,109 @@ async function launchGame(page, id) {
   return iframe;
 }
 
-async function blockingViolations(page) {
+// Every severity counts: moderate items such as duplicate landmark names are real defects too.
+async function axeViolations(page) {
   const results = await new AxeBuilder({ page }).analyze();
   return results.violations
-    .filter((violation) => ["serious", "critical"].includes(violation.impact))
     .map(({ id, impact, help, nodes }) => ({ id, impact, help, targets: nodes.map((node) => node.target.join(" ")) }));
 }
 
 async function expectAccessible(page, state) {
-  const found = await blockingViolations(page);
+  const found = await axeViolations(page);
   expect(found, `${state}: ${JSON.stringify(found, null, 2)}`).toEqual([]);
+}
+
+function describeElement(el) {
+  const classes = typeof el.className === "string" && el.className ? `.${el.className.trim().split(/\s+/).join(".")}` : "";
+  return `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${classes}`;
+}
+
+// WCAG 2.5.8: pointer targets need 24x24 CSS px unless they sit inline in a sentence.
+async function undersizedTargets(page) {
+  return page.evaluate((describeSource) => {
+    const describe = new Function(`return (${describeSource})`)();
+    const found = [];
+    for (const el of document.querySelectorAll('a[href], button, input, [tabindex]:not([tabindex="-1"])')) {
+      if (el.disabled) continue;
+      const rect = el.getBoundingClientRect();
+      const style = getComputedStyle(el);
+      // Visually hidden controls (the 1 px skip link before focus) are not pointer targets.
+      if (rect.width <= 1 || rect.height <= 1 || style.visibility === "hidden") continue;
+      if (rect.width >= 24 && rect.height >= 24) continue;
+      const inSentence = style.display === "inline"
+        && Array.from(el.parentElement.childNodes).some((node) => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+      if (inSentence) continue;
+      found.push({ target: describe(el), width: Math.round(rect.width), height: Math.round(rect.height) });
+    }
+    return found;
+  }, describeElement.toString());
+}
+
+// Scroll containers must never need horizontal scrolling (WCAG 1.4.10 at 320 CSS px).
+async function horizontalOverflow(page) {
+  return page.evaluate(() => {
+    const found = [];
+    for (const el of [document.documentElement, document.body, ...document.querySelectorAll("#cabinet, #screen, #library, #player, #game-grid, #instruction-strip")]) {
+      if (el.scrollWidth > el.clientWidth + 1) found.push({ element: el.id || el.tagName.toLowerCase(), scrollWidth: el.scrollWidth, clientWidth: el.clientWidth });
+    }
+    return found;
+  });
+}
+
+// Tab through the document, recording focus visibility (2.4.7), indicator size (2.4.13) and obscuring (2.4.11).
+async function tabStops(page, { limit = 60 } = {}) {
+  const stops = [];
+  const walk = `walk-${Date.now()}-${Math.random()}`;
+  const inspect = () => page.evaluate(([describeSource, token]) => {
+    const describe = new Function(`return (${describeSource})`)();
+    const el = document.activeElement;
+    if (!el || el === document.body) return null;
+    const seenBefore = el.__tabStop === token;
+    el.__tabStop = token;
+    const style = getComputedStyle(el);
+    const rect = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    // Chromium snaps layout boxes and scroll offsets to whole pixels, so an element it has just
+    // scrolled into view can end 1-2 px past the viewport edge. Only real overlap matters here.
+    const slack = 2;
+    return {
+      target: describe(el),
+      tag: el.tagName,
+      seenBefore,
+      focusVisible: el.matches(":focus-visible"),
+      outlineStyle: style.outlineStyle,
+      outlineWidth: Number.parseFloat(style.outlineWidth),
+      inViewport: rect.top >= -slack && rect.left >= -slack && rect.bottom <= window.innerHeight + slack && rect.right <= window.innerWidth + slack,
+      unobscured: hit !== null && (hit === el || el.contains(hit))
+    };
+  }, [describeElement.toString(), walk]);
+  for (let step = 0; step < limit; step++) {
+    await page.keyboard.press("Tab");
+    let stop = await inspect();
+    // Focus inside the embedded game belongs to the game; keep tabbing until it comes back out.
+    for (let hop = 0; stop?.tag === "IFRAME" && stop.seenBefore && hop < 6; hop++) {
+      await page.keyboard.press("Tab");
+      stop = await inspect();
+    }
+    if (!stop || stop.seenBefore) break;
+    stops.push(stop);
+  }
+  return stops;
+}
+
+async function motionStyles(page) {
+  return page.evaluate(() => {
+    const found = [];
+    for (const el of document.querySelectorAll("body, body *")) {
+      for (const pseudo of [null, "::before", "::after"]) {
+        const style = getComputedStyle(el, pseudo);
+        const transitions = style.transitionProperty !== "none" && style.transitionDuration.split(",").some((value) => Number.parseFloat(value) > 0);
+        const animates = style.animationName !== "none";
+        if (transitions || animates) found.push(`${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${pseudo ?? ""}`);
+      }
+    }
+    return { moving: found, scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior };
+  });
 }
 
 test.describe("security posture", () => {
@@ -160,7 +253,7 @@ test.describe("accessibility gate", () => {
     await expectAccessible(page, "failed catalog");
   });
 
-  test("the gate reports an injected serious violation", async ({ page }) => {
+  test("the gate reports injected serious and moderate violations", async ({ page }) => {
     await stubRemoteGames(page);
     await openLibrary(page);
     await page.locator(".library-heading").evaluate((heading) => {
@@ -169,8 +262,182 @@ test.describe("accessibility gate", () => {
       const button = document.createElement("button");
       button.type = "button";
       heading.append(image, button);
+      for (const label of ["Duplicate", "Duplicate"]) {
+        const nav = document.createElement("nav");
+        nav.setAttribute("aria-label", label);
+        const link = document.createElement("a");
+        link.href = "#library";
+        link.textContent = label;
+        nav.append(link);
+        heading.append(nav);
+      }
     });
-    const found = await blockingViolations(page);
-    expect(found.map((violation) => violation.id)).toEqual(expect.arrayContaining(["image-alt", "button-name"]));
+    const found = await axeViolations(page);
+    expect(found.map((violation) => violation.id)).toEqual(expect.arrayContaining(["image-alt", "button-name", "landmark-unique"]));
+    expect(found.map((violation) => violation.impact)).toEqual(expect.arrayContaining(["critical", "moderate"]));
+  });
+
+  test("landmarks carry distinct names while a game is playing", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    const title = await page.locator('#game-grid .game-card[data-game-id="mona-maze"] .game-name').textContent();
+    await launchGame(page, "mona-maze");
+    const landmarks = await page.evaluate(() => Array.from(document.querySelectorAll("header, main, section, footer"))
+      .filter((el) => !el.hidden && el.closest("[hidden]") === null)
+      .map((el) => `${el.tagName.toLowerCase()}#${el.id || el.className}: ${el.getAttribute("aria-label")
+        ?? document.getElementById(el.getAttribute("aria-labelledby") ?? "")?.textContent ?? ""}`));
+    expect(landmarks).toEqual(expect.arrayContaining([
+      "header#page-header: Site header",
+      "main#cabinet: Arcade cabinet",
+      "section#screen: Arcade screen",
+      "section#player: Now playing",
+      `section#instruction-strip: ${title}`
+    ]));
+    await expect(page.locator("#player-title")).toHaveText(title);
+  });
+});
+
+test.describe("WCAG 2.2 AA checks", () => {
+  test("fits a 320 px viewport without horizontal scrolling", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    expect(await horizontalOverflow(page), "library").toEqual([]);
+    expect(await undersizedTargets(page), "library targets").toEqual([]);
+
+    await launchGame(page, "mona-crossing");
+    await page.locator("#guide-toggle").click();
+    await expect(page.locator("#player-guide")).toBeVisible();
+    expect(await horizontalOverflow(page), "playing").toEqual([]);
+    expect(await undersizedTargets(page), "playing targets").toEqual([]);
+
+    await page.locator("#focus-button").click();
+    await expect(page.locator("#cabinet")).toHaveClass(/is-focused/);
+    expect(await horizontalOverflow(page), "focus mode").toEqual([]);
+    expect(await undersizedTargets(page), "focus mode targets").toEqual([]);
+    await expectAccessible(page, "focus mode at 320 px");
+  });
+
+  test("pointer targets measure at least 24 by 24 CSS px on desktop", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    expect(await undersizedTargets(page), "library").toEqual([]);
+    await launchGame(page, "mona-maze");
+    await page.locator("#guide-toggle").click();
+    await expect(page.locator("#player-guide")).toBeVisible();
+    expect(await undersizedTargets(page), "playing").toEqual([]);
+  });
+
+  test("every keyboard stop shows an unobscured 3 px focus ring", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    const library = await tabStops(page);
+    expect(library.map((stop) => stop.target)).toEqual(expect.arrayContaining([
+      "a.skip-link", "a.wordmark", "button#theme-toggle.theme-button", "button.game-card.lavender", "button.game-card.mint",
+      "button.game-card.coral", "button#deck-library.arcade-control.lavender", "button#effects-button.arcade-control.coral"
+    ]));
+    expect(library.filter((stop) => stop.target.startsWith("button.game-card")).length).toBe(5);
+    for (const stop of library) {
+      expect(stop, stop.target).toMatchObject({ focusVisible: true, outlineStyle: "solid", inViewport: true, unobscured: true });
+      expect(stop.outlineWidth, stop.target).toBeGreaterThanOrEqual(3);
+    }
+
+    await page.locator('#game-grid .game-card[data-game-id="mona-maze"]').focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#frame-host iframe")).toHaveCount(1);
+    await expect(page.locator("#frame-host iframe")).toBeFocused();
+    await page.locator("#guide-toggle").click();
+    await expect(page.locator("#player-guide")).toBeVisible();
+    await page.locator("#return-button").focus();
+    const playing = await tabStops(page);
+    expect(playing.map((stop) => stop.target)).toEqual(expect.arrayContaining([
+      "button#focus-button.small-button", "button#fullscreen-button.small-button", "a#open-game.small-button",
+      "button#enter-game.text-button", "button#reload-game.text-button", "button#guide-toggle.text-button", "a.game-repo", "iframe",
+      "button#deck-library.arcade-control.lavender", "button#deck-focus.arcade-control.mint"
+    ]));
+    for (const stop of playing) {
+      if (stop.tag === "IFRAME") continue;
+      expect(stop, stop.target).toMatchObject({ focusVisible: true, outlineStyle: "solid", inViewport: true, unobscured: true });
+      expect(stop.outlineWidth, stop.target).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  test("focus mode keeps its controls reachable and unobscured on a phone", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    await launchGame(page, "mona-maze");
+    await page.locator("#guide-toggle").click();
+    await page.locator("#focus-button").click();
+    await expect(page.locator("#cabinet")).toHaveClass(/is-focused/);
+    await expect(page.locator("#focus-button")).toBeFocused();
+    await expect(page.locator("#focus-button")).toHaveText("Exit focus");
+    await page.locator("#return-button").focus();
+    const stops = await tabStops(page);
+    expect(stops.map((stop) => stop.target)).toEqual(expect.arrayContaining(["button#focus-button.small-button", "a.game-repo", "iframe"]));
+    for (const stop of stops) {
+      if (stop.tag === "IFRAME") continue;
+      expect(stop, stop.target).toMatchObject({ focusVisible: true, inViewport: true, unobscured: true });
+    }
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#cabinet")).not.toHaveClass(/is-focused/);
+    await expect(page.locator("#focus-button")).toHaveText("Focus mode");
+  });
+
+  test("honours prefers-reduced-motion", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    const normal = await motionStyles(page);
+    expect(normal.moving, "cards animate when motion is allowed").toEqual(expect.arrayContaining([expect.stringMatching(/^button/)]));
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await openLibrary(page);
+    await launchGame(page, "mona-maze");
+    expect(await motionStyles(page)).toEqual({ moving: [], scrollBehavior: "auto" });
+  });
+
+  test("announces catalog, frame and mode changes through live regions", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    await expect(page.locator('#catalog-loading[role="status"]')).toHaveCount(1);
+    await expect(page.locator('#catalog-notice[role="status"]')).toHaveCount(1);
+    await expect(page.locator('#catalog-error[role="alert"]')).toHaveCount(1);
+    await expect(page.locator('#frame-status[role="status"][aria-live="polite"]')).toHaveCount(1);
+    await expect(page.locator('#mode-status[role="status"]')).toHaveCount(1);
+
+    const title = await page.locator('#game-grid .game-card[data-game-id="mona-maze"] .game-name').textContent();
+    await launchGame(page, "mona-maze");
+    await expect(page.locator("#frame-status")).toContainText(new RegExp(`Opening ${title}|Blank screen or trouble playing`));
+    await expect(page.locator("#frame-host iframe")).toHaveAttribute("title", `${title} — interactive game`);
+
+    await page.goto("/#game/not-a-game");
+    await expect(page.locator("#catalog-notice")).toHaveText("That game is not in this cabinet. Choose one below.");
+    await expect(page.locator("#frame-host iframe")).toHaveCount(0);
+  });
+
+  test("deep links and browser history keep a single iframe", async ({ page }) => {
+    await stubRemoteGames(page);
+    await page.goto("/#game/mona-sweeper");
+    await expect(page.locator("#catalog-loading")).toBeHidden();
+    await expect(page.locator("#frame-host iframe")).toHaveCount(1);
+    await expect(page.locator("#frame-host iframe")).toHaveAttribute("src", "https://jdooley-clt.github.io/mona-sweeper/");
+    await expect(page).toHaveTitle("Mona Sweeper · GitHub Arcade");
+
+    await page.locator("#return-button").click();
+    await expect(page.locator("#frame-host iframe")).toHaveCount(0);
+    await expect(page).toHaveTitle("GitHub Arcade — The Commit Cabinet");
+    await page.locator('#game-grid .game-card[data-game-id="mona-breaker"]').click();
+    await expect(page.locator("#frame-host iframe")).toHaveAttribute("src", "https://jdooley-clt.github.io/mona-breaker/");
+
+    await page.goBack();
+    await expect(page.locator("#frame-host iframe")).toHaveCount(0);
+    await expect(page.locator("#library")).toBeVisible();
+    await page.goBack();
+    await expect(page.locator("#frame-host iframe")).toHaveCount(1);
+    await expect(page.locator("#frame-host iframe")).toHaveAttribute("src", "https://jdooley-clt.github.io/mona-sweeper/");
+    await page.goForward();
+    await page.goForward();
+    await expect(page.locator("#frame-host iframe")).toHaveCount(1);
+    await expect(page.locator("#frame-host iframe")).toHaveAttribute("src", "https://jdooley-clt.github.io/mona-breaker/");
   });
 });

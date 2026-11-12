@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
@@ -13,12 +13,18 @@ function topLevelBlock(yaml, key) {
 }
 
 test("every workflow action is pinned to a full commit SHA with a version comment", async () => {
-  const workflow = await read(".github/workflows/pages.yml");
-  const uses = [...workflow.matchAll(/^\s*-?\s*uses:\s*(\S+)(?:\s+#\s*(\S+))?\s*$/gm)];
-  assert.ok(uses.length >= 6, "the verify and deploy jobs use actions");
-  for (const [line, action, comment] of uses) {
-    assert.match(action, /^[a-z0-9-]+\/[a-z0-9-]+@[0-9a-f]{40}$/, `${line.trim()} pins a 40-character commit SHA`);
-    assert.match(comment ?? "", /^v\d+(\.\d+)*$/, `${line.trim()} carries the version comment Dependabot updates`);
+  const files = (await readdir(new URL(".github/workflows/", root))).filter((name) => /\.ya?ml$/.test(name)).sort();
+  assert.deepEqual(files, ["live-smoke.yml", "pages.yml"], "every workflow file is covered by this test");
+  for (const file of files) {
+    const workflow = await read(`.github/workflows/${file}`);
+    const uses = [...workflow.matchAll(/^\s*-?\s*uses:\s*(\S+)(?:\s+#\s*(\S+))?\s*$/gm)];
+    assert.ok(uses.length >= 3, `${file} uses actions`);
+    for (const [line, action, comment] of uses) {
+      assert.match(action, /^[a-z0-9-]+\/[a-z0-9-]+@[0-9a-f]{40}$/, `${file}: ${line.trim()} pins a 40-character commit SHA`);
+      assert.match(comment ?? "", /^v\d+(\.\d+)*$/, `${file}: ${line.trim()} carries the version comment Dependabot updates`);
+    }
+    assert.equal(topLevelBlock(workflow, "permissions").trim(), "contents: read", `${file} grants only contents: read at the top level`);
+    assert.match(workflow, /persist-credentials: false/, `${file} does not persist the checkout token`);
   }
 });
 
@@ -37,6 +43,33 @@ test("the workflow verifies pull requests and only publishes from main", async (
   assert.match(workflow, /if: failure\(\)/, "Playwright diagnostics upload on failure");
 });
 
+test("the live smoke runs daily with issue access only in its job and always reports", async () => {
+  const workflow = await read(".github/workflows/live-smoke.yml");
+  const triggers = topLevelBlock(workflow, "on");
+  assert.match(triggers, /schedule:\n\s+- cron: "[^"]+"/, "on: schedules a cron run");
+  assert.ok(triggers.includes("workflow_dispatch:"), "on: allows manual runs");
+  assert.doesNotMatch(triggers, /pull_request|push:/, "the live smoke never runs for code changes");
+  assert.match(workflow, /if: github\.repository == 'jdooley-clt\/arcade'/, "forks do not smoke the live site or file issues");
+  assert.match(workflow, /permissions:\n\s+contents: read\n\s+issues: write/, "the job can read the checkout and manage the tracking issue");
+  assert.doesNotMatch(workflow, /(pull-requests|id-token|pages|actions|packages|deployments): write/, "no other write scopes");
+  for (const step of ["npm ci", "npx playwright install --with-deps chromium", "node scripts/live-smoke-check.mjs", "npx playwright test --config playwright.live.config.js", "node scripts/report-live-smoke.mjs"]) {
+    assert.ok(workflow.includes(`run: ${step}`), `the smoke runs ${step}`);
+  }
+  const reportStart = workflow.indexOf("- name: Open, update, or close the tracking issue");
+  const reportEnd = workflow.indexOf("run: node scripts/report-live-smoke.mjs");
+  assert.ok(reportStart >= 0 && reportEnd > reportStart, "the report step exists");
+  const report = workflow.slice(reportStart, reportEnd);
+  assert.match(report, /if: always\(\)/, "the report step runs after failures");
+  assert.match(report, /GH_TOKEN: \$\{\{ secrets\.GITHUB_TOKEN \}\}/, "gh authenticates with the job token");
+  assert.match(report, /LIVE_SMOKE_HTTP_OUTCOME: \$\{\{ steps\.http\.outcome \}\}/);
+  assert.match(report, /LIVE_SMOKE_BROWSER_OUTCOME: \$\{\{ steps\.browser\.outcome \}\}/);
+  assert.match(workflow, /if: failure\(\)/, "diagnostics upload on failure");
+  const live = await read("playwright.live.config.js");
+  assert.doesNotMatch(live, /webServer/, "the live config targets the published site, not a local server");
+  assert.match(live, /https:\/\/jdooley-clt\.github\.io\/arcade\//);
+  assert.match(await read("playwright.config.js"), /testIgnore: \/live-smoke\\\.spec\\\.js\$\//, "the PR gate ignores the live spec");
+});
+
 test("Dependabot watches actions and npm weekly and groups development updates", async () => {
   const config = await read(".github/dependabot.yml");
   assert.match(config, /^version: 2$/m);
@@ -47,7 +80,7 @@ test("Dependabot watches actions and npm weekly and groups development updates",
 
 test("line endings and binaries are normalized by .gitattributes", async () => {
   const attributes = await read(".gitattributes");
-  for (const rule of ["* text=auto eol=lf", "*.svg text eol=lf", "*.png binary", "*.ttf binary", "*.woff2 binary"]) {
+  for (const rule of ["* text=auto eol=lf", "*.svg text eol=lf", "*.png binary", "*.webp binary", "*.ttf binary", "*.woff2 binary"]) {
     assert.ok(attributes.split("\n").includes(rule), `.gitattributes has ${rule}`);
   }
 });

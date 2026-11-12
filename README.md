@@ -46,9 +46,25 @@ npm run test:browser
 
 It starts the preview server on port 4180 (`PLAYWRIGHT_PORT` overrides it),
 stubs the remote game pages, and fails on any Content Security Policy violation
-or any serious/critical accessibility finding across the library, playing
-screen, focus mode, and empty/error catalog states. Pull requests run both
-commands in CI before anything can reach `main`.
+or any axe-core finding of any severity across the library, playing screen,
+focus mode, and empty/error catalog states. It also checks the WCAG 2.2 items
+that axe cannot: 24 px pointer targets, no horizontal overflow at 320 px, a
+visible and unobscured focus ring on every keyboard stop, live-region
+announcements, and reduced-motion behaviour. Pull requests run both commands
+in CI before anything can reach `main`.
+
+Run the Lighthouse budget check against a staged copy of the site (Chrome or
+Chromium must be installed; `CHROME_PATH` points at a specific binary):
+
+```sh
+npm run test:lighthouse
+```
+
+`lighthouserc.cjs` serves `_site/` and fails the mobile run when Performance,
+Accessibility, or Best Practices drop below 0.95, the page weighs more than
+500 KB, or the largest contentful paint takes longer than 2.0 s. CI stages
+`_site/` for you; locally, copy `index.html`, `styles.css`, `games.json`,
+`src/`, and `assets/` into `_site/` first.
 
 ## Games
 
@@ -69,11 +85,12 @@ coral bug streets with an aqua commit river and mint gardens for Mona Crossing,
 and a mint contribution-graph board with bug flags for Mona Sweeper.
 Flappy's character uses the actual game's sprite layout with the cabinet's pastel
 palette.
-The original gameplay PNG captures remain in `assets/` as references and catalog
+The gameplay captures remain in `assets/` as WebP references and catalog
 fallback artwork. Cover compositions, titles, genres, and accent colors come
 from the catalog. Focus mode hides the cover header to keep the game area clear.
 The marquee uses a locally hosted
-[Silkscreen](https://github.com/googlefonts/silkscreen) font; its SIL Open Font
+[Silkscreen](https://github.com/googlefonts/silkscreen) font (WOFF2, with the
+original TrueType file as a fallback); its SIL Open Font
 License is included in `assets/fonts/OFL.txt`. No fonts are fetched from third
 parties at runtime.
 
@@ -188,6 +205,65 @@ An empty catalog and a failed catalog request have distinct recovery messages.
 - On phones, the playing cabinet drops its decorative surround and uses the full
   page width. Scroll inside document-style games for their full UI.
 
+## Accessibility
+
+The cabinet (`index.html`, `styles.css`, `src/app.js`) is built to meet
+**WCAG 2.2 Level AA**. The claim covers the cabinet's own chrome: the library,
+the playing screen, focus mode, and the loading, empty, and error states. Each
+embedded game is a separate document with its own accessibility statement in
+its repository; the cabinet neither improves nor degrades what happens inside
+the iframe.
+
+- **Structure.** Every landmark has a unique accessible name; headings
+  describe the library and the selected game; the skip link jumps straight to
+  the screen, whether it shows the library or the running game; `lang`, page
+  titles, and the iframe title name the current game.
+- **Keyboard.** Everything works with Tab, Enter, Space, and Escape. Launch and
+  reload hand focus to the game iframe, Return hands it back to the card you
+  came from, and **Focus game controls** re-enters the game at any time. Focus
+  mode and native fullscreen both have a visible exit, and Escape leaves native
+  fullscreen (2.1.1, 2.1.2, 2.4.3).
+- **Focus appearance.** Every keyboard stop draws a 3 px focus ring with at
+  least 3:1 contrast against the surface around it, and the browser gate checks
+  that no stop is hidden under the sticky toolbar or the viewport edge in focus
+  mode (2.4.7, 2.4.11, 2.4.13).
+- **Color and contrast.** Text in both themes measures at least 4.5:1 and focus
+  rings and form borders at least 3:1 against their backgrounds; the pastel
+  cabinet buttons are identified by their visible labels rather than by color
+  alone (1.4.1, 1.4.3, 1.4.11). The theme button switches light and dark mode
+  and otherwise follows the system preference.
+- **Pointer and layout.** Every control measures at least 24 by 24 CSS px and
+  the page has no horizontal scrolling at 320 CSS px wide, the width of a
+  1280 px screen at 400 % zoom (1.4.10, 2.5.8).
+- **Motion and flashing.** CRT scanlines start off, have no flicker, and never
+  intercept pointer input. `prefers-reduced-motion` removes the cabinet's
+  transitions; nothing in the cabinet flashes or moves on its own (2.2.2,
+  2.3.1, 2.3.3).
+- **Status messages.** Catalog loading and errors, launch and blank-screen
+  hints, and fullscreen fallback notices are announced through polite status
+  regions without moving focus (4.1.3).
+
+The Playwright gate (`npm run test:browser`) enforces this on every pull
+request with axe-core at every severity plus targeted checks for the items
+above; Lighthouse's accessibility score must stay at or above 0.95.
+
+Per-game notes, which belong to the games rather than the cabinet:
+
+- **Mona's Merge Maze** and **Mona Breaker** render a moving 3D camera as part
+  of play. The maze lets you switch camera views with `V`, both games pause
+  with `P` or `Escape`, and the maze honours `prefers-reduced-motion` for its
+  own transitions. People who are sensitive to camera motion may prefer the
+  2D games.
+- **Mona Crossing** gives you 40 seconds per crossing. The timer is part of the
+  game's design and can be paused at any time with `P` or `Escape`, but the
+  game currently offers no way to extend or turn it off (WCAG 2.2.1 treats a
+  real-time game's limit as essential).
+- **Flappy Copilot** and **Mona Sweeper** have no time limits; Flappy's play
+  is reaction-based, and both are fully controllable from the keyboard.
+
+Found a barrier? Open an issue in this repository for the cabinet, or in the
+game's repository for anything inside the iframe.
+
 ## Integration limits
 
 No game advertises a shared `postMessage` API, so there is deliberately **no global
@@ -265,10 +341,22 @@ switch, or reload rather than hidden.
   review; do not widen the policy or the sandbox to make a single game work.
 
 `SECURITY.md` explains what is in scope and how to report a vulnerability
-privately. Pull requests run `npm test` and `npm run test:browser` in the
-`verify` job of `.github/workflows/pages.yml`; every action in that workflow is
-pinned to a full commit SHA, and `.github/dependabot.yml` keeps the pins and the
-development dependencies current.
+privately. Pull requests run `npm test`, `npm run test:browser`, and the
+Lighthouse budgets in the `verify` job of `.github/workflows/pages.yml`; every
+action in that workflow is pinned to a full commit SHA, and
+`.github/dependabot.yml` keeps the pins and the development dependencies
+current. Direct pushes to `main` are blocked; changes land through pull
+requests whose `Verify` check has passed.
+
+A scheduled workflow, `.github/workflows/live-smoke.yml`, checks the published
+cabinet and the five game sites once a day: it expects HTTP 200 and the right
+`<title>` from each URL, validates that the live `games.json` still points at
+`jdooley-clt` game and repository URLs, and launches every catalog game in the
+live cabinet with Playwright (`test/browser/live-smoke.spec.js`). When a check
+fails, `scripts/report-live-smoke.mjs` opens or updates a single tracking
+issue with the failing URLs and the run link, and closes it again once a run
+is green. Run `npx playwright test --config playwright.live.config.js` to
+exercise the live spec locally; it is not part of `npm run test:browser`.
 
 ## GitHub Pages deployment
 
@@ -283,9 +371,9 @@ individual game repositories unchanged.
    manually from the Actions tab.
 3. The `verify` job runs `npm test` and the Playwright/axe browser gate, stages
    only static site files, confirms nothing from `node_modules` or the test
-   tooling is staged, and uploads the Pages artifact; the `deploy` job then
-   publishes it. Pull requests run `verify` only. Use the successful
-   deployment's URL.
+   tooling is staged, runs the Lighthouse budgets against the staged copy, and
+   uploads the Pages artifact; the `deploy` job then publishes it. Pull
+   requests run `verify` only. Use the successful deployment's URL.
 
 The site is live only once Pages has been enabled and deployment succeeds.
 Adding the workflow alone does **not**
@@ -301,14 +389,18 @@ styles.css              Enamel, screen, controls, responsive/focus layouts
 games.json              The only catalog to edit when adding games
 src/catalog.js          Catalog validation and hash parsing
 src/app.js              Rendering, iframe lifecycle, navigation and focus
-assets/                 Gameplay screenshots, cover artwork, and cabinet favicon
+assets/                 Gameplay captures (WebP), cover artwork, font, favicon
 scripts/serve.mjs        Dependency-free local preview server
+scripts/report-live-smoke.mjs  Opens, updates, or closes the live-smoke issue
 test/catalog.test.js    Native Node regression tests
 test/serve.test.js      Local preview HTTP smoke test
 test/hardening.test.js  Workflow pins, CSP, lockfile, and policy checks
-test/browser/           Playwright + axe-core browser gate
+test/live-smoke.test.js Issue reporter behaviour for failing and green runs
+test/browser/           Playwright + axe-core gate and the live-smoke spec
 playwright.config.js    Browser gate configuration (preview server on 4180)
-.github/workflows/      Verify-then-deploy GitHub Pages workflow
+playwright.live.config.js  Live-site smoke configuration (no local server)
+lighthouserc.cjs        Lighthouse CI budgets for the staged site
+.github/workflows/      Verify-then-deploy Pages workflow and daily live smoke
 .github/dependabot.yml  Weekly action-pin and dev-dependency updates
 .gitattributes          LF line endings; binary artwork and fonts
 SECURITY.md             Scope and private vulnerability reporting

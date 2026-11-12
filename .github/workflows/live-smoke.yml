@@ -1,0 +1,53 @@
+name: Live smoke
+
+on:
+  schedule:
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Live smoke
+    if: github.repository == 'jdooley-clt/arcade'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    concurrency:
+      group: live-smoke
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Check the live Pages sites and catalog
+        id: http
+        run: node scripts/live-smoke-check.mjs
+      - name: Launch every game in the live cabinet
+        id: browser
+        if: always()
+        run: npx playwright test --config playwright.live.config.js
+      - name: Open, update, or close the tracking issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LIVE_SMOKE_HTTP_OUTCOME: ${{ steps.http.outcome }}
+          LIVE_SMOKE_BROWSER_OUTCOME: ${{ steps.browser.outcome }}
+        run: node scripts/report-live-smoke.mjs
+      - name: Upload smoke diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: live-smoke-diagnostics
+          path: live-smoke/
+          if-no-files-found: ignore
+          retention-days: 7

@@ -3,4 +3,7 @@ node_modules/
 .playwright-cli/
 test-results/
 playwright-report/
+.lighthouseci/
+live-smoke/
+_site/
 .DS_Store
