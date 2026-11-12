@@ -6,9 +6,14 @@
   "description": "A little candy cabinet for GitHub-themed browser games.",
   "scripts": {
     "start": "node scripts/serve.mjs",
-    "test": "node --test"
+    "test": "node --test \"test/*.test.js\"",
+    "test:browser": "playwright test"
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1"
   }
 }

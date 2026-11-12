@@ -147,7 +147,10 @@ adding a game-ID-specific workaround.
 
 Run `npm start` and `npm test`. The native tests validate the catalog and local
 artwork files and smoke-test the preview server. They do not fetch remote games
-or establish that an iframe actually renders.
+or establish that an iframe actually renders. `npm run test:browser` (after
+`npm ci` and `npx playwright install chromium`) checks the cabinet's Content
+Security Policy and accessibility in Chromium with the remote games stubbed;
+pull requests run both in CI.
 
 Use browser automation when available, but inspect the rendered result too:
 

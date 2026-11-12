@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://jdooley-clt.github.io; frame-src 'self' https://jdooley-clt.github.io; script-src 'self'; style-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="#f7f4ef">
     <meta name="description" content="A little less work. A little more play. A candy-cab arcade for GitHub-themed browser games.">
     <title>GitHub Arcade — The Commit Cabinet</title>
@@ -48,7 +50,7 @@
             <div id="catalog-notice" class="notice" role="status" hidden></div>
             <div id="catalog-error" class="notice error" role="alert" hidden></div>
             <label id="search-wrap" class="search-wrap" hidden>Find a game <input id="game-search" type="search" placeholder="Title, genre, or description" autocomplete="off"></label>
-            <div id="game-grid" class="game-grid" aria-label="Games"></div>
+            <div id="game-grid" class="game-grid" role="group" aria-label="Games"></div>
             <p id="empty-results" class="empty-results" hidden>No games match. Try another search.</p>
             <p id="catalog-loading" class="catalog-loading" role="status">Opening the game library…</p>
             <div class="library-footer"><span><kbd>Tab</kbd> to choose <kbd>Enter</kbd> to play</span><span id="library-footnote">Made for the joy of it <span aria-hidden="true">♡</span></span></div>
@@ -97,7 +99,7 @@
       <div class="control-deck">
         <div class="joystick-decoration" aria-hidden="true"><div class="joystick-base"><div class="joystick-stem"></div><div class="joystick-ball"></div></div><span>CABINET DECOR</span></div>
         <div class="deck-center"><span class="micro">MAKE TIME<br>FOR PLAY.</span><div class="deck-stripes" aria-hidden="true"><i></i><i></i><i></i></div></div>
-        <div class="cabinet-controls" aria-label="Cabinet controls">
+        <div class="cabinet-controls" role="group" aria-label="Cabinet controls">
           <button id="deck-library" class="arcade-control lavender" type="button"><span class="button-cap" aria-hidden="true">▦</span><span>Game library</span></button>
           <button id="deck-focus" class="arcade-control mint" type="button" disabled aria-pressed="false"><span class="button-cap" aria-hidden="true">⛶</span><span>Focus mode</span></button>
           <button id="effects-button" class="arcade-control coral" type="button" aria-pressed="false"><span class="button-cap" aria-hidden="true">≋</span><span>CRT effect: off</span></button>

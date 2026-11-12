@@ -77,10 +77,11 @@ unless they are intentional shipping assets.
 ## Commands and handoff
 
 - Node.js 22 or newer; `npm start` previews at `http://127.0.0.1:4173`.
-- `PORT=4175 npm start` selects another port. There is no installation or build
-  step for this dependency-free site.
-- Run `npm test` and the browser checklist in the adding-games guide. Native
-  tests do not prove a remote game is playable.
+- `PORT=4175 npm start` selects another port. The site has no runtime
+  dependencies or build step; `npm ci` installs only the development-time
+  Playwright/axe browser gate (`npm run test:browser`).
+- Run `npm test`, `npm run test:browser`, and the browser checklist in the
+  adding-games guide. Native tests do not prove a remote game is playable.
 - Keep tests independent of total game count and catalog ordering. Look up known
   games by stable ID rather than assuming they occupy the first two slots.
 - Do not commit credentials, generated caches, or test output. Do not push,

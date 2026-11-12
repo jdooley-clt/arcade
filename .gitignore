@@ -2,4 +2,5 @@ node_modules/
 .playwright-mcp/
 .playwright-cli/
 test-results/
+playwright-report/
 .DS_Store
