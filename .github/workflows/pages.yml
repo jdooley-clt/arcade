@@ -54,6 +54,8 @@ jobs:
         with:
           name: lighthouse-reports
           path: .lighthouseci/
+          # The reports live in a dot-directory, which upload-artifact skips by default.
+          include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 7
       - name: Upload Pages artifact
