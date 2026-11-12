@@ -52,7 +52,6 @@ function renderCatalog() {
     const card = element("button", `game-card ${game.accent}`);
     card.type = "button";
     card.dataset.gameId = game.id;
-    card.setAttribute("aria-label", `Play ${game.title}`);
     const art = element("span", "art-wrap");
     art.append(gameArtwork(game), element("span", "game-category micro", game.category));
     const info = element("span", "game-info");

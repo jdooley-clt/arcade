@@ -26,14 +26,29 @@ npm start
 Open **http://127.0.0.1:4173**. `PORT=8080 npm start` chooses another port.
 The preview server binds to loopback by default; for a trusted local network,
 use `HOST=0.0.0.0 npm start`. Do not use the preview server as a production server.
-There is nothing to `npm install`. Opening `index.html` as a `file://` URL will not
-work because browsers restrict module scripts and fetching the catalog.
+The site itself has no runtime dependencies and no build step; `npm ci` installs
+only the development-time browser test gate described below. Opening `index.html`
+as a `file://` URL will not work because browsers restrict module scripts and
+fetching the catalog.
 
-Run the dependency-free catalog, routing, and preview-server tests:
+Run the dependency-free catalog, routing, hardening, and preview-server tests:
 
 ```sh
 npm test
 ```
+
+Run the browser gate (Playwright + axe-core in Chromium) after `npm ci` and
+`npx playwright install chromium`:
+
+```sh
+npm run test:browser
+```
+
+It starts the preview server on port 4180 (`PLAYWRIGHT_PORT` overrides it),
+stubs the remote game pages, and fails on any Content Security Policy violation
+or any serious/critical accessibility finding across the library, playing
+screen, focus mode, and empty/error catalog states. Pull requests run both
+commands in CI before anything can reach `main`.
 
 ## Games
 
@@ -196,6 +211,65 @@ permissions need a deliberate integration review. `allow-scripts` together with
 `allow-same-origin` is **not a security boundary for games hosted on the cabinet's
 own origin**; host only trusted local games. No game-to-parent messaging is used.
 
+## Security posture
+
+The cabinet declares its Content Security Policy in a `<meta http-equiv>` tag in
+`index.html`, because GitHub Pages cannot set response headers:
+
+```text
+default-src 'self'; img-src 'self' data: https://jdooley-clt.github.io;
+frame-src 'self' https://jdooley-clt.github.io; script-src 'self';
+style-src 'self'; font-src 'self'; connect-src 'self';
+base-uri 'none'; form-action 'none'; object-src 'none'
+```
+
+- Scripts, styles, fonts, and the catalog load only from the site's own origin;
+  there is no inline script, inline `style=""` attribute, `unsafe-inline`, or
+  `unsafe-eval`. The player sets its per-game `--game-height` custom properties
+  through the CSSOM (`style.setProperty`), which the policy does not restrict;
+  the browser gate asserts zero `securitypolicyviolation` events across launch,
+  theme toggle, reload, focus mode, and return.
+- `frame-src` limits embeds to the cabinet's origin and `https://jdooley-clt.github.io`.
+  The explicit host keeps the live games embeddable from the local preview
+  server, where `'self'` is `127.0.0.1`. `src/catalog.js` additionally rejects
+  `javascript:`, `data:`, `http:`, protocol-relative, credentialed, and
+  `file:` game URLs before anything is rendered (see `test/catalog.test.js`).
+- A `<meta>` policy cannot carry `frame-ancestors`, `sandbox`, or reporting
+  directives, so the cabinet does not claim clickjacking protection for itself.
+- `<meta name="referrer" content="strict-origin-when-cross-origin">` governs the
+  cabinet's own requests and outbound links; every `target="_blank"` link also
+  carries `rel="noopener noreferrer"`, and game iframes use
+  `referrerpolicy="no-referrer"`.
+
+Game iframes are created with
+`sandbox="allow-scripts allow-same-origin allow-pointer-lock"` and
+`allow="fullscreen; gamepad"`, and are removed from the document on return,
+switch, or reload rather than hidden.
+
+- `allow-same-origin` is required because without it the frame gets an opaque
+  origin: all five games keep scores or settings in their own `localStorage`,
+  which an opaque-origin frame cannot read or write.
+- The games at `https://jdooley-clt.github.io/<game>/` are project Pages sites
+  of the same account, so they share the cabinet's origin,
+  `https://jdooley-clt.github.io`. That makes the sandbox a guard rail for
+  well-behaved games, not an isolation boundary: a same-origin script could in
+  principle reach the parent document. Isolation therefore rests on the games
+  being separately maintained, reviewed repositories under the same account,
+  each deployed by its own workflow, plus the sandbox denying forms, popups,
+  modals, downloads, and top-level navigation to anything that is not
+  deliberately granted. Games hosted under this repository's `games/` directory
+  would be same-origin for the same reason, which is why only trusted local
+  games belong there.
+- Embedding a game from a different origin would be isolated by the sandbox in
+  the usual way, but would also need a `frame-src` change and an integration
+  review; do not widen the policy or the sandbox to make a single game work.
+
+`SECURITY.md` explains what is in scope and how to report a vulnerability
+privately. Pull requests run `npm test` and `npm run test:browser` in the
+`verify` job of `.github/workflows/pages.yml`; every action in that workflow is
+pinned to a full commit SHA, and `.github/dependabot.yml` keeps the pins and the
+development dependencies current.
+
 ## GitHub Pages deployment
 
 The public URL is **`https://jdooley-clt.github.io/arcade/`**, published from
@@ -207,8 +281,11 @@ individual game repositories unchanged.
    build and deployment source.
 2. Push or merge the site to `main`, or run **Deploy arcade to GitHub Pages**
    manually from the Actions tab.
-3. The workflow runs `npm test`, stages only static site files, uploads the Pages
-   artifact, and deploys it. Use the successful deployment's URL.
+3. The `verify` job runs `npm test` and the Playwright/axe browser gate, stages
+   only static site files, confirms nothing from `node_modules` or the test
+   tooling is staged, and uploads the Pages artifact; the `deploy` job then
+   publishes it. Pull requests run `verify` only. Use the successful
+   deployment's URL.
 
 The site is live only once Pages has been enabled and deployment succeeds.
 Adding the workflow alone does **not**
@@ -219,7 +296,7 @@ a subpath with their relative directory structure intact.
 ## Project map
 
 ```text
-index.html              Cabinet structure and accessible UI
+index.html              Cabinet structure, CSP/referrer policy, and accessible UI
 styles.css              Enamel, screen, controls, responsive/focus layouts
 games.json              The only catalog to edit when adding games
 src/catalog.js          Catalog validation and hash parsing
@@ -228,7 +305,13 @@ assets/                 Gameplay screenshots, cover artwork, and cabinet favicon
 scripts/serve.mjs        Dependency-free local preview server
 test/catalog.test.js    Native Node regression tests
 test/serve.test.js      Local preview HTTP smoke test
-.github/workflows/      Static GitHub Pages deployment
+test/hardening.test.js  Workflow pins, CSP, lockfile, and policy checks
+test/browser/           Playwright + axe-core browser gate
+playwright.config.js    Browser gate configuration (preview server on 4180)
+.github/workflows/      Verify-then-deploy GitHub Pages workflow
+.github/dependabot.yml  Weekly action-pin and dev-dependency updates
+.gitattributes          LF line endings; binary artwork and fonts
+SECURITY.md             Scope and private vulnerability reporting
 AGENTS.md              Guardrails for coding agents
 docs/adding-games.md   End-to-end new-game contribution guide
 ```
