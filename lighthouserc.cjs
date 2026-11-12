@@ -6,7 +6,9 @@ module.exports = {
     collect: {
       staticDistDir: "./_site",
       url: ["http://localhost/"],
-      numberOfRuns: 3
+      // The first run on a shared runner can carry cold-start blocking time; the median of
+      // five runs tolerates two such outliers.
+      numberOfRuns: 5
     },
     assert: {
       aggregationMethod: "median-run",

@@ -25,7 +25,9 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          # Keep in step with pages.yml: npm 11 accepts the lockfile shape
+          # Dependabot produces, so a lockfile that passes Verify also installs here.
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
