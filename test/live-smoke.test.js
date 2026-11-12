@@ -84,8 +84,8 @@ test("a bad URL opens the tracking issue when none is open", async () => {
   const [create] = gh.find("create");
   assert.ok(create, "gh issue create ran");
   assert.deepEqual(create.args.slice(0, 8), ["issue", "create", "--repo", "jdooley-clt/arcade", "--title", ISSUE_TITLE, "--body-file", "-"]);
-  assert.match(create.input, new RegExp(`- ${BAD_URL.replace(/[./]/g, "\\$&")} — HTTP 404`));
-  assert.match(create.input, new RegExp(`Run: ${RUN_URL.replace(/[./]/g, "\\$&")}`));
+  assert.ok(create.input.includes(`- ${BAD_URL} — HTTP 404`), "the body lists the failing URL");
+  assert.ok(create.input.includes(`Run: ${RUN_URL}`), "the body links the run");
   assert.equal(gh.find("edit").length, 0);
   assert.equal(gh.find("close").length, 0);
 });
@@ -111,7 +111,7 @@ test("a green run comments on and closes the open tracking issue", async () => {
   assert.deepEqual(verbs, ["list", "comment", "close"]);
   const [comment] = gh.find("comment");
   assert.equal(comment.args[2], "7");
-  assert.match(comment.input, new RegExp(RUN_URL.replace(/[./]/g, "\\$&")));
+  assert.ok(comment.input.includes(RUN_URL), "the recovery comment links the run");
   assert.deepEqual(gh.find("close")[0].args, ["issue", "close", "7", "--repo", "jdooley-clt/arcade", "--reason", "completed"]);
 });
 

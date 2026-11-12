@@ -27,11 +27,11 @@ test("every catalog game launches from the live cabinet and returns to the libra
     await test.step(`launch ${id}`, async () => {
       try {
         await page.locator(`#game-grid .game-card[data-game-id="${id}"]`).click();
-        await expect(page).toHaveURL(new RegExp(`#game/${id}$`));
+        await expect(page).toHaveURL((url) => url.hash === `#game/${id}`);
         const iframe = page.locator("#frame-host iframe");
         await expect(iframe).toHaveCount(1);
         const src = await iframe.getAttribute("src");
-        expect(src, `${id} embeds a jdooley-clt page`).toMatch(new RegExp(`^${GAME_ORIGIN.replace(/[./]/g, "\\$&")}`));
+        expect(src?.startsWith(GAME_ORIGIN), `${id} embeds a jdooley-clt page, got ${src}`).toBe(true);
         await expect(page.locator("#open-game")).toHaveAttribute("href", src);
 
         // A GitHub Pages 404 has a title but neither a canvas nor a button; a game shows at least one.
