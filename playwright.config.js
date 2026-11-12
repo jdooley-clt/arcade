@@ -6,6 +6,8 @@ const baseURL = `http://127.0.0.1:${port}/`;
 
 export default defineConfig({
   testDir: "test/browser",
+  // The live-site smoke has its own config (playwright.live.config.js) and never runs in the PR gate.
+  testIgnore: /live-smoke\.spec\.js$/,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,

@@ -60,13 +60,15 @@ The renderer composes the same assets in the library and player header:
 | `coverCharacter` | Optional transparent character layered over the background on both surfaces. |
 | `accent` | `lavender`, `mint`, or `coral`, used by cabinet styling. |
 
-Prefer a 640x360 landscape SVG or PNG for the background and a square transparent
-SVG or PNG for the character. Keep important content away from edges: library
+Prefer a 640x360 landscape SVG or WebP for the background and a square transparent
+SVG or WebP for the character. Keep raster captures at or under 25 KB each; the
+Lighthouse budget in CI caps the library page's total transfer size. Keep important
+content away from edges: library
 backgrounds use a 16:9 crop, while headers have a different responsive crop.
 The renderer positions the character for each surface; test both.
 
 Put shipping assets under `assets/` with descriptive names, for example
-`branch-runner.png`, `branch-runner-cover.svg`, and `branch-runner-character.svg`.
+`branch-runner.webp`, `branch-runner-cover.svg`, and `branch-runner-character.svg`.
 Local SVGs should be self-contained; avoid scripts, external font dependencies,
 or external images nested inside an SVG. Keep the original captures if useful,
 and include required attribution and license terms.
@@ -88,7 +90,7 @@ supported fields; replace its URLs, controls, and asset paths with real ones:
   "category": "Platformer",
   "url": "https://your-name.github.io/branch-runner/",
   "repository": "https://github.com/your-name/branch-runner",
-  "art": "./assets/branch-runner.png",
+  "art": "./assets/branch-runner.webp",
   "coverArt": "./assets/branch-runner-cover.svg",
   "coverCharacter": "./assets/branch-runner-character.svg",
   "accent": "coral",

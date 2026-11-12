@@ -14,7 +14,7 @@ test("shipped games validate and resolve art under the Pages project path", () =
   const flappy = games.find((game) => game.id === "flappy-copilot");
   assert.ok(mona);
   assert.ok(flappy);
-  assert.equal(mona.art, `${base}assets/mona-maze.png`);
+  assert.equal(mona.art, `${base}assets/mona-maze.webp`);
   assert.equal(mona.coverArt, `${base}assets/mona-cover.svg`);
   assert.equal(mona.coverCharacter, `${base}assets/octocat-candy.svg`);
   assert.equal(flappy.coverArt, `${base}assets/flappy-cover.svg`);

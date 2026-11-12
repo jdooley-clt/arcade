@@ -29,6 +29,7 @@ function gameArt(game, source = game.art, className = "game-art") {
   image.width = 640;
   image.height = 360;
   image.loading = "lazy";
+  image.decoding = "async";
   image.addEventListener("error", () => {
     image.hidden = true;
     console.warn(`Artwork could not be loaded for ${game.id}: ${source}`);

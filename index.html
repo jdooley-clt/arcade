@@ -9,13 +9,14 @@
     <meta name="description" content="A little less work. A little more play. A candy-cab arcade for GitHub-themed browser games.">
     <title>GitHub Arcade — The Commit Cabinet</title>
     <script src="./src/theme.js"></script>
+    <link rel="preload" href="./assets/fonts/Silkscreen-Regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="icon" type="image/svg+xml" href="./assets/coin.svg">
     <link rel="stylesheet" href="./styles.css">
     <script type="module" src="./src/app.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#screen">Skip to arcade</a>
-    <header class="page-header">
+    <header class="page-header" aria-label="Site header">
       <a href="#library" class="wordmark"><span aria-hidden="true">⑂</span> GitHub Arcade</a>
       <span class="header-note">A little less work. A little more play.</span>
       <div class="header-actions">
@@ -27,7 +28,7 @@
       </div>
     </header>
 
-    <main id="cabinet" class="cabinet">
+    <main id="cabinet" class="cabinet" aria-label="Arcade cabinet">
       <header class="cabinet-top">
         <div class="speaker" aria-hidden="true"></div>
         <div class="marquee">
@@ -56,7 +57,7 @@
             <div class="library-footer"><span><kbd>Tab</kbd> to choose <kbd>Enter</kbd> to play</span><span id="library-footnote">Made for the joy of it <span aria-hidden="true">♡</span></span></div>
           </div>
 
-          <section id="player" class="player" aria-labelledby="player-title" hidden>
+          <section id="player" class="player" aria-label="Now playing" hidden>
             <header id="game-cover" class="game-cover">
               <div class="cover-copy">
                 <p id="cover-category" class="micro"></p>

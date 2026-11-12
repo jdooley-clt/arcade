@@ -20,9 +20,11 @@ test("preview serves the site and assets without exposing hidden files", async (
   const home = await fetch(base);
   assert.equal(home.status, 200);
   assert.match(await home.text(), /The Commit Cabinet/);
-  for (const path of ["/src/app.js", "/src/theme.js", "/games.json", "/styles.css", "/assets/mona-maze.png", "/assets/flappy-copilot.png", "/assets/mona-cover.svg", "/assets/octocat-candy.svg", "/assets/flappy-cover.svg", "/assets/copilot-candy.svg", "/assets/fonts/Silkscreen-Regular.ttf"]) {
+  const types = { ".js": "text/javascript", ".json": "application/json", ".css": "text/css", ".webp": "image/webp", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".ttf": "font/ttf" };
+  for (const path of ["/src/app.js", "/src/theme.js", "/games.json", "/styles.css", "/assets/mona-maze.webp", "/assets/flappy-copilot.webp", "/assets/mona-cover.svg", "/assets/octocat-candy.svg", "/assets/flappy-cover.svg", "/assets/copilot-candy.svg", "/assets/fonts/Silkscreen-Regular.woff2", "/assets/fonts/Silkscreen-Regular.ttf"]) {
     const response = await fetch(`${base}${path}`);
     assert.equal(response.status, 200, path);
+    assert.ok(response.headers.get("content-type").startsWith(types[path.slice(path.lastIndexOf("."))]), `${path} content type`);
     assert.ok((await response.arrayBuffer()).byteLength > 0, path);
   }
   assert.equal((await fetch(`${base}/.git`)).status, 403);
