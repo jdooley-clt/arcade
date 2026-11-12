@@ -116,6 +116,9 @@ async function tabStops(page, { limit = 60 } = {}) {
     const style = getComputedStyle(el);
     const rect = el.getBoundingClientRect();
     const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    // Chromium snaps layout boxes and scroll offsets to whole pixels, so an element it has just
+    // scrolled into view can end 1-2 px past the viewport edge. Only real overlap matters here.
+    const slack = 2;
     return {
       target: describe(el),
       tag: el.tagName,
@@ -123,7 +126,7 @@ async function tabStops(page, { limit = 60 } = {}) {
       focusVisible: el.matches(":focus-visible"),
       outlineStyle: style.outlineStyle,
       outlineWidth: Number.parseFloat(style.outlineWidth),
-      inViewport: rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight + 0.5 && rect.right <= window.innerWidth + 0.5,
+      inViewport: rect.top >= -slack && rect.left >= -slack && rect.bottom <= window.innerHeight + slack && rect.right <= window.innerWidth + slack,
       unobscured: hit !== null && (hit === el || el.contains(hit))
     };
   }, [describeElement.toString(), walk]);

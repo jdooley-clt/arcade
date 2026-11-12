@@ -111,7 +111,7 @@ test("a green run comments on and closes the open tracking issue", async () => {
   assert.deepEqual(verbs, ["list", "comment", "close"]);
   const [comment] = gh.find("comment");
   assert.equal(comment.args[2], "7");
-  assert.ok(comment.input.includes(RUN_URL), "the recovery comment links the run");
+  assert.equal(comment.input, `All live checks passed in ${RUN_URL}. Closing automatically.\n`);
   assert.deepEqual(gh.find("close")[0].args, ["issue", "close", "7", "--repo", "jdooley-clt/arcade", "--reason", "completed"]);
 });
 
