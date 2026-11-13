@@ -23,6 +23,22 @@ The field reference and deployment instructions are in [README.md](README.md).
 - Do not introduce a framework, runtime dependencies, telemetry, authentication,
   a backend, or a global leaderboard for a catalog addition.
 
+## Attribution and provenance policy
+
+- Christina Warren's ([@filmgirl](https://github.com/filmgirl)) credits on the
+  cabinet and on the games she created are permanent. Add credit for new work;
+  never remove, reword, or relocate hers.
+- New games credit their own creator in the catalog entry, the README game list,
+  and the game's own repository.
+- `builtWith` is optional provenance that only the repository owner populates,
+  by hand, after a game is publicly launched. Coding sessions and contributors
+  leave it out of every `games.json` entry and never record or populate AI model
+  names, tool names, or dates anywhere in this repository: not in the catalog,
+  source, tests, documentation, pull requests, or commit messages.
+- Tests and documentation that need provenance examples use only generic
+  placeholders such as `"Example Model"`, `"Example Model B"`, and
+  `"Example Tool"`. The schema has no date field; do not add one.
+
 ## Link games back to GitHub Arcade
 
 - Every newly registered game must link to `https://jdooley-clt.github.io/arcade/`

@@ -79,8 +79,8 @@ See the [artwork notes](../README.md#games) before using GitHub characters.
 ## 3. Register the game
 
 Append an object to the array in `games.json`, or insert it at the intended display
-position. Preserve existing IDs and entries. This fictional example includes all
-supported fields; replace its URLs, controls, and asset paths with real ones:
+position. Preserve existing IDs and entries. This fictional example includes every
+field a contributor supplies; replace its URLs, controls, and asset paths with real ones:
 
 ```json
 {
@@ -125,6 +125,30 @@ Paths resolve beside `index.html`. Use `./assets/...` rather than `/assets/...`
 so they work under `/arcade/`. The deployment workflow includes `src/`, `assets/`,
 and optional `games/`; placing dependencies in arbitrary top-level folders will
 not publish them.
+
+### Provenance (`builtWith`) is owner-only
+
+The catalog accepts one more optional field, `builtWith`, which the cabinet shows
+as a **Built with** line on the game's card and playing header. **Contributors
+and coding sessions leave `builtWith` out.** Only the repository owner populates
+it, by hand, after a game is publicly launched; never guess, infer, or copy a
+model, tool, creator, or link into it, and never add a date. When the owner fills
+it in, the accepted shape is:
+
+```json
+"builtWith": {
+  "model": "Example Model",
+  "tool": "Example Tool",
+  "creator": { "name": "Example Creator", "url": "https://example.com/creator" },
+  "notes": "One or two plain-text sentences about how the game came together.",
+  "link": "https://example.com/notes"
+}
+```
+
+At least one of `model` or `tool` is required; `creator` (with a required `name`
+and optional HTTPS `url`), `notes`, and `link` are optional. Unknown keys are
+rejected, so an entry with a `date` or any other extra key is skipped with an
+on-screen error while the rest of the catalog stays playable.
 
 ## 4. Choose a viewport, not a crop
 
@@ -182,6 +206,11 @@ Use browser automation when available, but inspect the rendered result too:
 - [ ] Existing Mona and Flappy still launch, play, and return correctly.
 - [ ] Search works when the catalog reaches six games; the library scrolls above
       four games. Do not replace the grid with a layout hardcoded to this count.
+- [ ] The new entry has no `builtWith` unless the repository owner added it. If
+      it does, the card shows one **Built with** line, the playing header shows
+      the line plus any creator, notes, and link (new-tab links carry
+      `rel="noopener noreferrer"`), search matches those fields, and Focus mode
+      hides the header. Every other card and header stays unchanged.
 - [ ] Relative assets and local games resolve when the site is served below a
       subpath such as `/arcade/`, not just at the origin root.
 
@@ -195,7 +224,9 @@ the README game list, and any required attribution. Credit the new game's own
 creator; existing games keep Christina Warren's (@filmgirl) credits exactly as
 written. Include a library screenshot,
 the real game URL, the inputs/layouts exercised, and any known limitations.
-Do not edit the test suite's expected total count every time a game is added.
+Fill in the new-game checklist from the pull request template, which mirrors
+section 5 above. Do not edit the test suite's expected total count every time
+a game is added.
 
 Once Pages is configured, the existing workflow deploys pushes to `main`, so a
 merged catalog PR publishes the new listing. Verify the resulting deployment

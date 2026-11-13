@@ -6,6 +6,15 @@ The Commit Cabinet is an ivory-and-pastel candy cabinet for GitHub-themed browse
 games. Pick a game on the recessed screen, play the original game, then return to
 the library. No accounts, build step, tracking, framework, or runtime dependencies.
 
+## Why these games exist
+
+The arcade is a showcase of small retro browser games built in the open: each one
+is a finished, free game you can play in seconds, with its full source a click
+away. Where the repository owner has recorded how a game was made, its card and
+playing header show a short, optional **Built with** line (see `builtWith` in
+[Add a game](#add-a-game)). Contributor and coding-session conventions live in
+[AGENTS.md](AGENTS.md).
+
 ## Origins and credits
 
 Created by Christina Warren ([@filmgirl](https://github.com/filmgirl)), currently
@@ -165,6 +174,7 @@ Choose embeddable games you trust and have permission to host.
 | `viewport.layout` | Optional `document` (default) or `portrait`. |
 | `viewport.height` | Optional desktop iframe height, 320–2400 pixels; default 960. |
 | `viewport.mobileHeight` | Optional mobile iframe height, 320–2400 pixels; default 1100. |
+| `builtWith` | Optional provenance object populated only by the repository owner: `model` and/or `tool` (at least one; plain text such as `"Example Model"` or `"Example Tool"`), optional `creator` (`name` plain text, optional HTTPS `url`), optional plain-text `notes`, and optional HTTPS `link`. Unknown keys (including any date) are rejected. Omit it entirely otherwise. |
 
 Relative paths resolve beside `index.html`, **not** beside the JavaScript module.
 Use `./assets/...` and `./games/...`, not `/assets/...`, to preserve GitHub Pages
@@ -180,7 +190,9 @@ canvas. In focus mode, the available screen space determines the viewport instea
 Always test the actual embedded page on desktop and touch devices.
 
 The library uses a responsive grid, with a scrollable screen above four games.
-Search appears at six games. Invalid
+Search appears at six games and also matches a game's `builtWith` model, tool,
+creator name, and notes. When two or more games name different models, **All**
+plus one chip per model appear under the search field to filter the grid. Invalid
 entries are skipped with specific on-screen errors; valid entries remain playable.
 An empty catalog and a failed catalog request have distinct recovery messages.
 

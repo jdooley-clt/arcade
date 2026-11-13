@@ -105,6 +105,88 @@ test("empty and structurally invalid catalogs are distinguished", () => {
   assert.throws(() => validateCatalog({}, base), /must be an array/);
 });
 
+test("builtWith is optional and resolves to null when omitted", () => {
+  const { games, errors } = validateCatalog(catalog, base);
+  assert.deepEqual(errors, []);
+  for (const game of games) assert.equal(game.builtWith, null, `${game.id} ships without provenance`);
+  const entry = { ...catalog[0] };
+  delete entry.builtWith;
+  assert.equal(validateCatalog([entry], base).games[0].builtWith, null);
+});
+
+test("builtWith accepts full and minimal provenance using plain text and HTTPS links", () => {
+  const full = {
+    model: " Example Model ",
+    tool: "Example Tool",
+    creator: { name: "Example Creator", url: "https://example.com/creator" },
+    notes: "Example notes about how the game came together.",
+    link: "https://example.com/notes"
+  };
+  const { games, errors } = validateCatalog([
+    { ...catalog[0], id: "full-provenance", builtWith: full },
+    { ...catalog[0], id: "model-only", builtWith: { model: "Example Model B" } },
+    { ...catalog[0], id: "tool-only", builtWith: { tool: "Example Tool" } },
+    { ...catalog[0], id: "unlinked-creator", builtWith: { model: "Example Model", creator: { name: "Example Creator" } } }
+  ], base);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(games.map((game) => game.builtWith), [
+    {
+      model: "Example Model",
+      tool: "Example Tool",
+      creator: { name: "Example Creator", url: "https://example.com/creator" },
+      notes: "Example notes about how the game came together.",
+      link: "https://example.com/notes"
+    },
+    { model: "Example Model B", tool: null, creator: null, notes: null, link: null },
+    { model: null, tool: "Example Tool", creator: null, notes: null, link: null },
+    { model: "Example Model", tool: null, creator: { name: "Example Creator", url: null }, notes: null, link: null }
+  ]);
+});
+
+test("invalid builtWith shapes are rejected with actionable errors without hiding valid games", () => {
+  const invalid = [
+    { model: "Example Model", date: "someday" },
+    { model: "Example Model", vendor: "Example Vendor" },
+    {},
+    { creator: { name: "Example Creator" } },
+    { model: "" },
+    { tool: null },
+    { model: "<b>Example Model</b>" },
+    { tool: "Example\u0007Tool" },
+    { model: "Example Model", notes: "   " },
+    { model: "Example Model", notes: "Read <a href='x'>this</a>" },
+    { model: "Example Model", creator: "Example Creator" },
+    { model: "Example Model", creator: ["Example Creator"] },
+    { model: "Example Model", creator: { url: "https://example.com/creator" } },
+    { model: "Example Model", creator: { name: "Example Creator", url: "http://example.com/creator" } },
+    { model: "Example Model", creator: { name: "Example Creator", url: "./creator" } },
+    { model: "Example Model", creator: { name: "Example Creator", handle: "example" } },
+    { model: "Example Model", link: "http://example.com/notes" },
+    { model: "Example Model", link: "./notes.html" },
+    { model: "Example Model", link: "javascript:alert(1)" },
+    { model: "Example Model", link: "https://user:pass@example.com/notes" },
+    ["Example Model"],
+    "Example Model",
+    null
+  ];
+  const result = validateCatalog([
+    ...invalid.map((builtWith, index) => ({ ...catalog[0], id: `invalid-${index}`, builtWith })),
+    { ...catalog[0], id: "valid-provenance", builtWith: { model: "Example Model" } },
+    { ...catalog[0], id: "no-provenance" }
+  ], base);
+  assert.deepEqual(result.games.map((game) => game.id), ["valid-provenance", "no-provenance"]);
+  assert.equal(result.errors.length, invalid.length);
+  for (const error of result.errors) assert.match(error, /^Game \d+: builtWith/);
+  assert.match(result.errors[0], /unsupported key "date"; only model, tool, creator, notes, and link are allowed/);
+  assert.match(result.errors[2], /builtWith must include model or tool/);
+  assert.match(result.errors[6], /builtWith\.model must be plain text without HTML tags or control characters/);
+  assert.match(result.errors[12], /builtWith\.creator\.name must be a non-empty string/);
+  assert.match(result.errors[13], /builtWith\.creator\.url must use HTTPS/);
+  assert.match(result.errors[15], /builtWith\.creator has an unsupported key "handle"; only name and url are allowed/);
+  assert.match(result.errors[16], /builtWith\.link must use HTTPS/);
+  assert.match(result.errors[17], /builtWith\.link must be an absolute HTTPS URL/);
+});
+
 test("hash routing handles direct links, library and malformed paths", () => {
   for (const hash of ["", "#", "#library"]) assert.deepEqual(gameFromHash(hash), { id: null });
   assert.deepEqual(gameFromHash("#game/mona-maze"), { id: "mona-maze" });

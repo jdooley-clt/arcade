@@ -580,3 +580,171 @@ test.describe("six-game library", () => {
     });
   }
 });
+
+// Owner-populated provenance is exercised through a stubbed catalog with placeholder names; shipped entries carry none.
+test.describe("provenance", () => {
+  const unpopulated = catalog.filter((game) => !game.builtWith).slice(0, 3);
+  test.skip(unpopulated.length < 3, "needs three shipped games without builtWith");
+
+  const sample = (id, title, extra) => ({
+    ...structuredClone(unpopulated[0]), id, title, url: `https://jdooley-clt.github.io/${id}/`, ...extra
+  });
+  const fixture = [
+    sample("example-a", "Example A", {
+      builtWith: {
+        model: "Example Model A",
+        tool: "Example Tool",
+        creator: { name: "Example Creator", url: "https://example.com/creator" },
+        notes: "Prototyped from a one-paragraph brief, then tuned by hand.",
+        link: "https://example.com/notes"
+      }
+    }),
+    sample("example-b", "Example B", { builtWith: { model: "Example Model B" } }),
+    sample("example-c", "Example C", { builtWith: { tool: "Example Tool" } }),
+    ...unpopulated
+  ];
+  const cards = (page) => page.locator("#game-grid .game-card");
+  const chips = (page) => page.locator("#model-filter .filter-chip");
+  // Scoped to the bar: a card's accessible name also contains its Built with text.
+  const chip = (page, name, pressed) => page.locator("#model-filter").getByRole("button", { name, exact: true, ...(pressed === undefined ? {} : { pressed }) });
+
+  async function openProvenanceLibrary(page) {
+    await page.route("**/games.json", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(fixture) }));
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    await expect(cards(page)).toHaveCount(fixture.length);
+  }
+
+  async function expectExternal(link, href) {
+    await expect(link).toHaveAttribute("href", href);
+    await expect(link).toHaveAttribute("target", "_blank");
+    await expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  }
+
+  test("the shipped catalog renders no provenance and no model chips", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    await expect(page.locator("#model-filter")).toBeHidden();
+    await expect(page.locator("#model-filter > *")).toHaveCount(0);
+    await expect(page.locator("#game-grid .game-provenance")).toHaveCount(0);
+    await launchGame(page, unpopulated[0].id);
+    await expect(page.locator("#cover-provenance")).toBeHidden();
+    await expect(page.locator("#cover-provenance > *")).toHaveCount(0);
+  });
+
+  test("cards and the playing header show provenance with safe external links in both themes", async ({ page }) => {
+    const report = await watchPage(page);
+    await openProvenanceLibrary(page);
+    const pills = page.locator("#game-grid .game-provenance");
+    await expect(pills).toHaveText(["Built with Example Model A · Example Tool", "Built with Example Model B", "Built with Example Tool"]);
+    for (const game of unpopulated) {
+      await expect(page.locator(`#game-grid .game-card[data-game-id="${game.id}"] .game-provenance`)).toHaveCount(0);
+    }
+    const cardA = page.locator('#game-grid .game-card[data-game-id="example-a"]');
+    await expect(cardA).toHaveAccessibleName(/Built with Example Model A · Example Tool/);
+    await expect(cardA.locator(".launch-label")).toHaveText(/PLAY/);
+    await expectAccessible(page, "provenance library (light)");
+    await page.locator("#theme-toggle").click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await expectAccessible(page, "provenance library (dark)");
+
+    await launchGame(page, "example-a");
+    const panel = page.locator("#cover-provenance");
+    await expect(panel).toBeVisible();
+    await expect(panel.locator(".provenance-line")).toHaveText("Built with Example Model A · Example Tool by Example Creator");
+    await expectExternal(panel.locator("a.provenance-creator"), "https://example.com/creator");
+    await expect(panel.locator("a.provenance-creator")).toHaveText("Example Creator");
+    expect((await panel.locator("a.provenance-creator").boundingBox()).height).toBeGreaterThanOrEqual(24);
+    await expect(panel.locator(".provenance-notes")).toHaveText("Prototyped from a one-paragraph brief, then tuned by hand.");
+    await expectExternal(panel.locator("a.provenance-link"), "https://example.com/notes");
+    await expect(panel.locator("a.provenance-link")).toHaveText("How it was built ↗");
+    expect(await undersizedTargets(page), "playing targets").toEqual([]);
+    await expectAccessible(page, "provenance playing (dark)");
+    await page.locator("#theme-toggle").click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expectAccessible(page, "provenance playing (light)");
+
+    await page.locator("#focus-button").click();
+    await expect(page.locator("#cabinet")).toHaveClass(/is-focused/);
+    await expect(panel, "focus mode hides the header along with its provenance").toBeHidden();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#cabinet")).not.toHaveClass(/is-focused/);
+    await expect(panel).toBeVisible();
+
+    await page.goto(`/#game/${unpopulated[0].id}`);
+    await expect(page.locator("#player-title")).toHaveText(unpopulated[0].title);
+    await expect(panel, "switching to an unpopulated game clears the block").toBeHidden();
+    await expect(page.locator("#cover-provenance > *")).toHaveCount(0);
+    await page.goto("/#game/example-b");
+    await expect(panel).toBeVisible();
+    await expect(page.locator("#cover-provenance > *")).toHaveText(["Built with Example Model B"]);
+
+    expect(await report()).toEqual({ violations: [], cspConsole: [], pageErrors: [] });
+  });
+
+  test("search matches provenance fields and model chips filter the grid", async ({ page }) => {
+    await openProvenanceLibrary(page);
+    const ids = () => cards(page).evaluateAll((nodes) => nodes.map((node) => node.dataset.gameId));
+    await expect(page.locator("#model-filter")).toBeVisible();
+    await expect(page.locator("#model-filter")).toHaveAttribute("aria-label", "Filter by model");
+    await expect(chips(page)).toHaveText(["All", "Example Model A", "Example Model B"]);
+    await expect(chip(page, "All", true)).toHaveCount(1);
+    await expect(chip(page, "Example Model B", false)).toHaveCount(1);
+
+    await chip(page, "Example Model B").click();
+    expect(await ids()).toEqual(["example-b"]);
+    await expect(chip(page, "Example Model B", true)).toHaveCount(1);
+    await expect(chip(page, "All", false)).toHaveCount(1);
+    await expect(page.locator("#empty-results")).toBeHidden();
+    await expectAccessible(page, "filtered by model");
+
+    const search = page.locator("#game-search");
+    await search.fill("Example Tool");
+    await expect(cards(page), "search and the model filter combine").toHaveCount(0);
+    await expect(page.locator("#empty-results")).toBeVisible();
+    await chip(page, "All").click();
+    expect(await ids()).toEqual(["example-a", "example-c"]);
+    await search.fill("Example Creator");
+    expect(await ids()).toEqual(["example-a"]);
+    await search.fill("one-paragraph brief");
+    expect(await ids()).toEqual(["example-a"]);
+    await search.fill("Model B");
+    expect(await ids()).toEqual(["example-b"]);
+    await search.fill("");
+    await expect(cards(page)).toHaveCount(fixture.length);
+    expect(await undersizedTargets(page), "library targets").toEqual([]);
+
+    const stops = await tabStops(page);
+    const targets = stops.map((stop) => stop.target);
+    const chipStops = stops.filter((stop) => stop.target === "button.filter-chip");
+    expect(chipStops, targets.join(", ")).toHaveLength(3);
+    for (const stop of chipStops) {
+      expect(stop).toMatchObject({ focusVisible: true, outlineStyle: "solid", inViewport: true, unobscured: true });
+      expect(stop.outlineWidth).toBeGreaterThanOrEqual(3);
+    }
+    expect(targets.indexOf("input#game-search"), "chips follow the search field").toBeLessThan(targets.indexOf("button.filter-chip"));
+    expect(targets.indexOf("button.filter-chip"), "chips precede the cards").toBeLessThan(targets.findIndex((target) => target.startsWith("button.game-card")));
+    await expect(chip(page, "Example Model A")).toHaveAttribute("aria-pressed", "false");
+    await chip(page, "Example Model A").focus();
+    await page.keyboard.press("Enter");
+    expect(await ids()).toEqual(["example-a"]);
+    await expect(chip(page, "Example Model A")).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("chips and the provenance header fit a 320 px viewport", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 640 });
+    await openProvenanceLibrary(page);
+    await expect(page.locator("#model-filter")).toBeVisible();
+    expect(await horizontalOverflow(page), "library").toEqual([]);
+    expect(await undersizedTargets(page), "library targets").toEqual([]);
+    await expectAccessible(page, "provenance library at 320 px");
+
+    await launchGame(page, "example-a");
+    await expect(page.locator("#cover-provenance .provenance-line")).toBeVisible();
+    await expect(page.locator("#cover-provenance .provenance-notes"), "notes fold away with the description on phones").toBeHidden();
+    await expect(page.locator("#cover-provenance a.provenance-link")).toBeVisible();
+    expect(await horizontalOverflow(page), "playing").toEqual([]);
+    expect(await undersizedTargets(page), "playing targets").toEqual([]);
+    await expectAccessible(page, "provenance playing at 320 px");
+  });
+});
