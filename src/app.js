@@ -9,6 +9,7 @@ let loadTimer;
 let focusMode = false;
 let nativeFullscreen = false;
 let returnId = null;
+let modelFilter = null;
 
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -46,9 +47,72 @@ function gameArtwork(game) {
   return artwork;
 }
 
+function externalLink(className, text, href) {
+  const link = element("a", className, text);
+  link.href = href;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  return link;
+}
+
+// Provenance is plain catalog text rendered through textContent; omitted entries add nothing to the DOM.
+function provenanceText(built) {
+  return `Built with ${[built.model, built.tool].filter(Boolean).join(" · ")}`;
+}
+
+function searchText(game) {
+  const built = game.builtWith;
+  return [game.title, game.category, game.description, built?.model, built?.tool, built?.creator?.name, built?.notes]
+    .filter(Boolean).join(" ").toLowerCase();
+}
+
+function renderProvenance(game) {
+  const panel = $("cover-provenance");
+  const built = game.builtWith;
+  panel.hidden = !built;
+  if (!built) {
+    panel.replaceChildren();
+    return;
+  }
+  const line = element("p", "provenance-line", provenanceText(built));
+  if (built.creator) {
+    line.append(document.createTextNode(" by "));
+    line.append(built.creator.url
+      ? externalLink("provenance-creator", built.creator.name, built.creator.url)
+      : element("span", "provenance-creator", built.creator.name));
+  }
+  const nodes = [line];
+  if (built.notes) nodes.push(element("p", "provenance-notes", built.notes));
+  if (built.link) nodes.push(externalLink("provenance-link", "How it was built ↗", built.link));
+  panel.replaceChildren(...nodes);
+}
+
+// Model chips appear only once two or more games name different models.
+function renderModelFilter() {
+  const bar = $("model-filter");
+  const models = [...new Set(games.map((game) => game.builtWith?.model).filter(Boolean))];
+  modelFilter = null;
+  bar.hidden = models.length < 2;
+  if (bar.hidden) {
+    bar.replaceChildren();
+    return;
+  }
+  bar.replaceChildren(...[null, ...models].map((model) => {
+    const chip = element("button", "filter-chip", model ?? "All");
+    chip.type = "button";
+    chip.setAttribute("aria-pressed", String(model === modelFilter));
+    chip.addEventListener("click", () => {
+      modelFilter = model;
+      for (const node of bar.children) node.setAttribute("aria-pressed", String(node === chip));
+      renderCatalog();
+    });
+    return chip;
+  }));
+}
+
 function renderCatalog() {
   const query = $("game-search").value.trim().toLowerCase();
-  const shown = games.filter((game) => `${game.title} ${game.category} ${game.description}`.toLowerCase().includes(query));
+  const shown = games.filter((game) => searchText(game).includes(query) && (modelFilter === null || game.builtWith?.model === modelFilter));
   $("game-grid").replaceChildren(...shown.map((game) => {
     const card = element("button", `game-card ${game.accent}`);
     card.type = "button";
@@ -63,6 +127,7 @@ function renderCatalog() {
     arrow.setAttribute("aria-hidden", "true");
     launch.append(arrow);
     info.append(title, description, launch);
+    if (game.builtWith) info.append(element("span", "game-provenance", provenanceText(game.builtWith)));
     card.append(art, info);
     card.addEventListener("click", () => { location.hash = `game/${game.id}`; });
     return card;
@@ -84,10 +149,7 @@ function guide(game) {
     pair.append(term, element("dd", "", action));
     list.append(pair);
   }
-  const repo = element("a", "game-repo", "Source & credits ↗");
-  repo.href = game.repository;
-  repo.target = "_blank";
-  repo.rel = "noopener noreferrer";
+  const repo = externalLink("game-repo", "Source & credits ↗", game.repository);
   fragment.append(list, element("p", "game-instructions", game.instructions), repo);
   return fragment;
 }
@@ -145,6 +207,7 @@ function launch(game) {
   }
   $("cover-category").textContent = game.category;
   $("cover-description").textContent = game.description;
+  renderProvenance(game);
   $("player-title").textContent = game.title;
   $("compact-player-title").textContent = game.title;
   $("open-game").href = game.url;
@@ -286,6 +349,7 @@ try {
   } else if (games.length === 0) {
     notice("catalog-notice", "This cabinet is empty. Add a game to games.json to get started.");
   }
+  renderModelFilter();
   renderCatalog();
   route();
 } catch (error) {
