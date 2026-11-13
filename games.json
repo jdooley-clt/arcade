@@ -103,5 +103,27 @@
     ],
     "instructions": "Uncover every clean commit tile without triggering a hidden bug. Your first revealed tile always opens a safe 3x3 neighborhood. Switch between Reveal and Flag mode on touch screens, or chord revealed numbers when their adjacent flags match. The game pauses when it loses focus; use its own theme, music, and SFX buttons.",
     "viewport": { "layout": "document", "height": 1060, "mobileHeight": 1080 }
+  },
+  {
+    "id": "mona-patrol",
+    "title": "Mona Patrol",
+    "description": "Drive Mona across lunar craters, mines, and rolling hills while battling Bug and CVE saucers from A to Z.",
+    "category": "Lunar buggy patrol",
+    "url": "https://jdooley-clt.github.io/mona-patrol/",
+    "repository": "https://github.com/jdooley-clt/mona-patrol",
+    "art": "./assets/mona-patrol.webp",
+    "coverArt": "./assets/mona-patrol-cover.svg",
+    "coverCharacter": "./assets/mona-patrol-character.svg",
+    "accent": "lavender",
+    "controls": [
+      { "keys": "Enter / Space / Start", "action": "Start or resume patrol" },
+      { "keys": "Left / Right or A / D", "action": "Shift buggy speed (Slow, Cruise, Boost)" },
+      { "keys": "Space / Up / W / Jump", "action": "Jump craters, mines, and rolling stones" },
+      { "keys": "Z / X / Ctrl / Fire", "action": "Fire forward laser and upward anti-air cannon" },
+      { "keys": "P / Esc", "action": "Pause or resume" },
+      { "keys": "M / Audio", "action": "Toggle chiptune music and sound effects" }
+    ],
+    "instructions": "Leap lunar craters and Stage 3+ landmine combinations, blast craggy boulders and Stage 4+ rolling stones, and shoot down swooping Bug Droppers and crater-carving CVE Bombers overhead across checkpoints A to Z. Audio starts off; use the game's own sound, stage, theme, and touch controls.",
+    "viewport": { "layout": "document", "height": 980, "mobileHeight": 900 }
   }
 ]

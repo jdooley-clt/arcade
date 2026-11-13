@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <title>Mona Patrol lunar craters, Metropolis spires, and Tri-Orb &amp; CVE saucers</title>
+  <defs>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.1" fill="#b9acd1"/>
+    </pattern>
+    <!-- Cyan Tri-Orb Bug-Dropper UFO -->
+    <g id="tri-ufo">
+      <path d="M0-13-16 8h32z" fill="none" stroke="#34313e" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M0-13-16 8h32z" fill="none" stroke="#96f2ff" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="0" cy="-13" r="9" fill="#3dc8ff" stroke="#34313e" stroke-width="2.8"/>
+      <circle cx="-16" cy="8" r="9" fill="#3dc8ff" stroke="#34313e" stroke-width="2.8"/>
+      <circle cx="16" cy="8" r="9" fill="#3dc8ff" stroke="#34313e" stroke-width="2.8"/>
+      <circle cx="0" cy="-13" r="3.2" fill="#fffdf4"/>
+      <circle cx="-16" cy="8" r="3.2" fill="#fffdf4"/>
+      <circle cx="16" cy="8" r="3.2" fill="#fffdf4"/>
+    </g>
+    <!-- Crimson & Gold Horned CVE-Bomber UFO -->
+    <g id="cve-ufo">
+      <path d="M-13-9-21-20M13-9l8-11" stroke="#34313e" stroke-width="4.2" stroke-linecap="round"/>
+      <path d="M-13-9-21-20M13-9l8-11" stroke="#ffd15c" stroke-width="2" stroke-linecap="round"/>
+      <path d="M-15-4a15 13 0 0 1 30 0z" fill="#ffd15c" stroke="#34313e" stroke-width="2.8" stroke-linejoin="round"/>
+      <ellipse cx="0" cy="2" rx="28" ry="8.5" fill="#e02856" stroke="#34313e" stroke-width="2.8"/>
+      <circle cx="-15" cy="2" r="2.6" fill="#fffdf4"/>
+      <circle cx="-5" cy="2" r="2.6" fill="#ffd15c"/>
+      <circle cx="5" cy="2" r="2.6" fill="#fffdf4"/>
+      <circle cx="15" cy="2" r="2.6" fill="#ffd15c"/>
+      <rect x="-8" y="8" width="16" height="5" rx="2" fill="#ffd15c" stroke="#34313e" stroke-width="2.2"/>
+    </g>
+    <!-- Spiked proximity mine -->
+    <g id="mine">
+      <path d="M-13 0l2-7h22l2 7z" fill="#6c758c" stroke="#34313e" stroke-width="2.4" stroke-linejoin="round"/>
+      <path d="M-8-7a8 7 0 0 1 16 0z" fill="#e62e5c" stroke="#34313e" stroke-width="2.4"/>
+      <path d="M-7-7v-7M0-7v-10M7-7v-7" stroke="#34313e" stroke-width="2.8" stroke-linecap="round"/>
+      <circle cx="-7" cy="-15" r="2" fill="#ffd15c"/>
+      <circle cx="0" cy="-18" r="2.2" fill="#fffdf4"/>
+      <circle cx="7" cy="-15" r="2" fill="#ffd15c"/>
+    </g>
+  </defs>
+
+  <!-- Commit Cabinet pastel lavender sky & dot pattern -->
+  <path fill="#e8dff7" d="M0 0h640v360H0z"/>
+  <path fill="url(#dots)" d="M0 0h640v300H0z"/>
+
+  <!-- Cabinet signature sparkle crosses -->
+  <g fill="#fffdf4">
+    <path d="M88 92h5v7h7v5h-7v7h-5v-7h-7v-5h7zM362 44h5v7h7v5h-7v7h-5v-7h-7v-5h7z"/>
+  </g>
+
+  <!-- Ringed lunar planet in upper-right -->
+  <g transform="translate(558 58)">
+    <circle r="20" fill="#fffdf4" stroke="#34313e" stroke-width="2.8"/>
+    <circle cx="-5" cy="-4" r="4.5" fill="#ded4f1"/>
+    <circle cx="6" cy="5" r="3" fill="#ded4f1"/>
+    <ellipse cy="1" rx="34" ry="7" transform="rotate(-12)" fill="none" stroke="#f06aa7" stroke-width="3.2"/>
+  </g>
+
+  <!-- Far craggy two-tone lavender mountains -->
+  <path d="M0 296V198l38-22 34 18 46-32 42 26 52-24 44 28 56-34 48 26 54-20 46 24 52-28 48 22 40-14v128z" fill="#cbbce6" stroke="#34313e" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M0 198l38-22 34 18 46-32 42 26 52-24 44 28 56-34 48 26 54-20 46 24 52-28 48 22 40-14" fill="none" stroke="#f4effc" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- Stage 2 sunlit Metropolis spires & lunar dome on horizon -->
+  <g stroke="#34313e" stroke-width="2.6" stroke-linejoin="round">
+    <!-- Left lunar dome -->
+    <path d="M82 238v-14" stroke-linecap="round"/>
+    <circle cx="82" cy="221" r="3.5" fill="#f06aa7"/>
+    <path d="M66 254a16 15 0 0 1 32 0z" fill="#fffdf4"/>
+    <!-- Right bulbous Metropolis spire with sunlit gold trim -->
+    <rect x="498" y="182" width="32" height="84" rx="6" fill="#62ba85"/>
+    <path d="M521 184h7v78h-7z" fill="#f5cc66" stroke="none"/>
+    <rect x="488" y="198" width="52" height="20" rx="9" fill="#62ba85"/>
+    <path d="M506 182v-12M522 182v-9" stroke-linecap="round"/>
+  </g>
+
+  <!-- Mid mint lunar hills -->
+  <path d="M0 298v-58c58-16 118-6 178 8s126 12 194-6 152-18 268 4v52z" fill="#b8e6c7" stroke="#34313e" stroke-width="3"/>
+
+  <!-- Checkpoint B beacon on right -->
+  <g stroke="#34313e" stroke-width="2.8" stroke-linejoin="round">
+    <path d="M568 278v-60" stroke-linecap="round"/>
+    <rect x="568" y="218" width="34" height="23" rx="4" fill="#c5e7b1"/>
+    <path fill="#34313e" stroke="none" fill-rule="evenodd" d="M580 223h8v3h2v3h-2v1h2v4h-2v2h-8zm3 3v3h4v-3zm0 6v3h4v-3z"/>
+  </g>
+
+  <!-- Multi-faceted craggy boulder & high-contrast spiked mine -->
+  <g stroke="#34313e" stroke-width="2.6" stroke-linejoin="round">
+    <path d="M442 280l-2-16 8-14 14-4 13 6 4 15-2 13z" fill="#b5a6db"/>
+    <path d="M442 264l8-14 14-4 3 16z" fill="#fffdf4" stroke="none"/>
+    <path d="M442 280l-2-16 8-14 14-4 13 6 4 15-2 13z" fill="none"/>
+  </g>
+  <use href="#mine" x="518" y="279"/>
+
+  <!-- Clean, simple lunar road with unmistakable shadowed crater chasm -->
+  <path d="M254 278h112v56H254z" fill="#34313e"/>
+  <path d="M0 360v-82c84 0 168 2 258 2l18 34 34 6 34-6 18-34c92-2 186-2 278-2v82z" fill="#f4a27e"/>
+  <path d="M0 360v-52c84 0 168 2 262 2l18 22 30 4 30-4 18-22c94-2 188-2 282-2v52z" fill="#dc8562"/>
+  <path d="M0 280c84 0 168 2 256 2M364 282c92-2 186-2 276-2" fill="none" stroke="#7bc96f" stroke-width="5" stroke-linecap="round"/>
+  <path d="M0 278c84 0 168 2 258 2l18 34 34 6 34-6 18-34c92-2 186-2 278-2" fill="none" stroke="#34313e" stroke-width="3.5" stroke-linejoin="round"/>
+
+  <!-- Distinct UFO pair: Cyan Tri-Orb Bug-Dropper (left) & Horned CVE-Bomber (right) -->
+  <use href="#tri-ufo" x="112" y="128"/>
+  <use href="#cve-ufo" x="458" y="84"/>
+
+  <!-- Falling winged bug (left) & finned CVE warhead (right) -->
+  <g transform="translate(138 172)" stroke="#34313e" stroke-width="2">
+    <ellipse cx="-6" cy="-2" rx="5" ry="2.5" fill="#bdf4ff"/>
+    <ellipse cx="6" cy="-2" rx="5" ry="2.5" fill="#bdf4ff"/>
+    <circle r="4.5" fill="#ff6ea8"/>
+  </g>
+  <g transform="translate(458 122)" stroke="#34313e" stroke-width="2" stroke-linejoin="round">
+    <path d="M-6-8h12l-3 5h-6z" fill="#ffd15c"/>
+    <ellipse cy="1" rx="5.5" ry="7" fill="#e02856"/>
+    <rect x="-2" y="-1" width="4" height="3" fill="#fffdf4" stroke="none"/>
+  </g>
+</svg>

@@ -21,6 +21,15 @@ test("shipped games validate and resolve art under the Pages project path", () =
   assert.equal(flappy.coverCharacter, `${base}assets/copilot-candy.svg`);
   assert.equal(mona.url, "https://jdooley-clt.github.io/mona-maze/");
   assert.equal(flappy.viewport.layout, "portrait");
+  const patrol = games.find((game) => game.id === "mona-patrol");
+  assert.ok(patrol);
+  assert.equal(patrol.url, "https://jdooley-clt.github.io/mona-patrol/");
+  assert.equal(patrol.repository, "https://github.com/jdooley-clt/mona-patrol");
+  assert.equal(patrol.art, `${base}assets/mona-patrol.webp`);
+  assert.equal(patrol.coverArt, `${base}assets/mona-patrol-cover.svg`);
+  assert.equal(patrol.coverCharacter, `${base}assets/mona-patrol-character.svg`);
+  assert.equal(patrol.accent, "lavender");
+  assert.deepEqual(patrol.viewport, { layout: "document", height: 980, mobileHeight: 900 });
 });
 
 test("every local catalog artwork reference points to a shipping asset", async () => {

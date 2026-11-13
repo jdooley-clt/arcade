@@ -75,6 +75,7 @@ Accessibility, or Best Practices drop below 0.95, the page weighs more than
 | Mona Breaker | [mona-breaker](https://jdooley-clt.github.io/mona-breaker/) | [jdooley-clt/mona-breaker](https://github.com/jdooley-clt/mona-breaker) |
 | Mona Crossing | [mona-crossing](https://jdooley-clt.github.io/mona-crossing/) | [jdooley-clt/mona-crossing](https://github.com/jdooley-clt/mona-crossing) |
 | Mona Sweeper | [mona-sweeper](https://jdooley-clt.github.io/mona-sweeper/) | [jdooley-clt/mona-sweeper](https://github.com/jdooley-clt/mona-sweeper) |
+| Mona Patrol | [mona-patrol](https://jdooley-clt.github.io/mona-patrol/) | [jdooley-clt/mona-patrol](https://github.com/jdooley-clt/mona-patrol) |
 
 The games remain in their own repositories. This project embeds them; it does not
 copy or change their implementations. The library and playing-screen headers
@@ -82,7 +83,8 @@ share coordinated illustrated covers: a lavender maze and pixel Octocat for
 Mona, mint commit pipelines with a pixel Copilot for Flappy, a peach
 contribution-graph brick board with the pixel Octocat on a paddle for Mona Breaker,
 coral bug streets with an aqua commit river and mint gardens for Mona Crossing,
-and a mint contribution-graph board with bug flags for Mona Sweeper.
+a mint contribution-graph board with bug flags for Mona Sweeper, and a lavender
+lunar ridge with Mona in a six-wheel patrol rover for Mona Patrol.
 Flappy's character uses the actual game's sprite layout with the cabinet's pastel
 palette.
 The gameplay captures remain in `assets/` as WebP references and catalog
@@ -99,10 +101,14 @@ The Octocat in `assets/octocat-candy.svg` is adapted from the
 `assets/mona-breaker-character.svg` reuses that same pixel Octocat, adding a
 paddle and ball, and `assets/mona-sweeper-character.svg` reuses it with a bug
 flag and commit tile. Mona Crossing reuses the same character layer, and its cover
-includes that silhouette in an original crossing neighborhood. Its original
+includes that silhouette in an original crossing neighborhood.
+`assets/mona-patrol-character.svg` seats the same pixel Octocat in a pink lunar
+rover for Mona Patrol, a game created by Jeramiah Dooley
+([@jdooley-clt](https://github.com/jdooley-clt)). Mona Crossing's original
 game, neighborhood, cover composition, and generated sound effects are
-[MIT-licensed](https://github.com/jdooley-clt/mona-crossing/blob/main/LICENSE), and
-Mona Sweeper is [MIT-licensed](https://github.com/jdooley-clt/mona-sweeper/blob/main/LICENSE);
+[MIT-licensed](https://github.com/jdooley-clt/mona-crossing/blob/main/LICENSE),
+Mona Sweeper is [MIT-licensed](https://github.com/jdooley-clt/mona-sweeper/blob/main/LICENSE),
+and Mona Patrol is [MIT-licensed](https://github.com/jdooley-clt/mona-patrol/blob/main/LICENSE);
 those licenses do not grant rights to GitHub artwork or trademarks. The Octocat
 design is copyright GitHub, Inc. and subject to
 [GitHub's artwork terms](https://octodex.github.com/faq/), not a license granted
@@ -254,10 +260,14 @@ Per-game notes, which belong to the games rather than the cabinet:
   with `P` or `Escape`, and the maze honours `prefers-reduced-motion` for its
   own transitions. People who are sensitive to camera motion may prefer the
   2D games.
-- **Mona Crossing** gives you 40 seconds per crossing. The timer is part of the
-  game's design and can be paused at any time with `P` or `Escape`, but the
-  game currently offers no way to extend or turn it off (WCAG 2.2.1 treats a
-  real-time game's limit as essential).
+- **Mona Crossing** gives you 40 seconds per crossing. The timer can be paused
+  at any time with `P` or `Escape`, and the **Relaxed timer** toggle (`T` or
+  the Relaxed timer button) removes the limit altogether; deliveries then earn
+  the base points without the quick-arrival bonus (2.2.1).
+- **Mona Patrol** is a 2D canvas game. It pauses with `P`, `Escape`, or its
+  Pause button and whenever it loses focus; `prefers-reduced-motion` disables
+  its parallax drift and crash shake; and every checkpoint you reach becomes a
+  safe respawn beacon, so losing a buggy never sends you back to the start.
 - **Flappy Copilot** and **Mona Sweeper** have no time limits; Flappy's play
   is reaction-based, and both are fully controllable from the keyboard.
 
@@ -270,8 +280,10 @@ No game advertises a shared `postMessage` API, so there is deliberately **no glo
 pause, mute, score, save state, or leaderboard**. Use each game's own controls.
 The cabinet itself plays no audio. Games may play sound after interaction; use
 Mona Maze's, Mona Breaker's, or Mona Sweeper's music/effects buttons and `M` key,
-Flappy's `M` key, or Mona Crossing's Sound button and `M` key. Mona Crossing has generated sound effects, no music, and sound starts
-off; it remembers the game's local setting. The cabinet uses no cookies and
+Flappy's `M` key, Mona Crossing's Sound button and `M` key, or Mona Patrol's Audio
+button and `M` key. Mona Crossing has generated sound effects, no music, and sound starts
+off; it remembers the game's local setting. Mona Patrol's audio also starts off.
+The cabinet uses no cookies and
 stores only its explicit theme preference in local storage; individual games
 may store their own preferences or scores.
 
@@ -323,7 +335,7 @@ Game iframes are created with
 switch, or reload rather than hidden.
 
 - `allow-same-origin` is required because without it the frame gets an opaque
-  origin: all five games keep scores or settings in their own `localStorage`,
+  origin: all six games keep scores or settings in their own `localStorage`,
   which an opaque-origin frame cannot read or write.
 - The games at `https://jdooley-clt.github.io/<game>/` are project Pages sites
   of the same account, so they share the cabinet's origin,
@@ -349,7 +361,7 @@ current. Direct pushes to `main` are blocked; changes land through pull
 requests whose `Verify` check has passed.
 
 A scheduled workflow, `.github/workflows/live-smoke.yml`, checks the published
-cabinet and the five game sites once a day: it expects HTTP 200 and the right
+cabinet and the six game sites once a day: it expects HTTP 200 and the right
 `<title>` from each URL, validates that the live `games.json` still points at
 `jdooley-clt` game and repository URLs, and launches every catalog game in the
 live cabinet with Playwright (`test/browser/live-smoke.spec.js`). When a check

@@ -17,7 +17,8 @@ export const SITES = [
   { url: "https://jdooley-clt.github.io/flappy-copilot/", title: "FLAPPY COPILOT — a retro terminal game" },
   { url: "https://jdooley-clt.github.io/mona-breaker/", title: "Mona Breaker" },
   { url: "https://jdooley-clt.github.io/mona-crossing/", title: "Mona Crossing" },
-  { url: "https://jdooley-clt.github.io/mona-sweeper/", title: "Mona Sweeper" }
+  { url: "https://jdooley-clt.github.io/mona-sweeper/", title: "Mona Sweeper" },
+  { url: "https://jdooley-clt.github.io/mona-patrol/", title: "Mona Patrol" }
 ];
 
 const DECODE = { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", "#39": "'", "#x27": "'" };
