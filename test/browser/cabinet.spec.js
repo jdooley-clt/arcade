@@ -1,5 +1,8 @@
+import { readFileSync } from "node:fs";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+
+const catalog = JSON.parse(readFileSync(new URL("../../games.json", import.meta.url), "utf8"));
 
 // Mirrors the <meta http-equiv> policy in index.html; change both together.
 const CSP = "default-src 'self'; img-src 'self' data: https://jdooley-clt.github.io; "
@@ -336,7 +339,7 @@ test.describe("WCAG 2.2 AA checks", () => {
       "a.skip-link", "a.wordmark", "button#theme-toggle.theme-button", "button.game-card.lavender", "button.game-card.mint",
       "button.game-card.coral", "button#deck-library.arcade-control.lavender", "button#effects-button.arcade-control.coral"
     ]));
-    expect(library.filter((stop) => stop.target.startsWith("button.game-card")).length).toBe(5);
+    expect(library.filter((stop) => stop.target.startsWith("button.game-card")).length).toBe(await page.locator("#game-grid .game-card").count());
     for (const stop of library) {
       expect(stop, stop.target).toMatchObject({ focusVisible: true, outlineStyle: "solid", inViewport: true, unobscured: true });
       expect(stop.outlineWidth, stop.target).toBeGreaterThanOrEqual(3);
@@ -440,4 +443,140 @@ test.describe("WCAG 2.2 AA checks", () => {
     await expect(page.locator("#frame-host iframe")).toHaveCount(1);
     await expect(page.locator("#frame-host iframe")).toHaveAttribute("src", "https://jdooley-clt.github.io/mona-breaker/");
   });
+});
+
+// The search field appears once the catalog lists six games; Mona Patrol is the sixth.
+test.describe("six-game library", () => {
+  const patrol = catalog.find((game) => game.id === "mona-patrol");
+  test.skip(catalog.length < 6 || !patrol, "needs a catalog of six games that includes mona-patrol");
+
+  const cards = (page) => page.locator("#game-grid .game-card");
+
+  // Both artwork layers must exist, resolve to the catalog assets, and decode (gameArt hides an image that fails to load).
+  async function expectArtwork(scope, game, state) {
+    const layers = [["cover", scope.locator("img.game-art"), game.coverArt], ["character", scope.locator("img.cover-character"), game.coverCharacter]];
+    for (const [layer, image, source] of layers) {
+      const asset = source.replace(/^\.\//, "/").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      await expect(image, `${state} ${layer}`).toHaveAttribute("src", new RegExp(`${asset}$`));
+      await expect(image, `${state} ${layer}`).toBeVisible();
+      await expect.poll(() => image.evaluate((img) => !img.hidden && img.complete && img.naturalWidth > 0), { message: `${state} ${layer} decodes` }).toBe(true);
+    }
+  }
+
+  test("shows the search field and counts every game", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    await expect(page.locator("#search-wrap")).toBeVisible();
+    await expect(page.locator("#game-search")).toHaveAttribute("type", "search");
+    await expect(page.locator("#game-count")).toHaveText(`${catalog.length} GAMES / ALWAYS FREE`);
+    await expect(cards(page)).toHaveCount(catalog.length);
+    await expect(cards(page).last()).toHaveAttribute("data-game-id", catalog.at(-1).id);
+    await expect(page.locator("#library")).toHaveClass(/has-many/);
+    await expect(page.locator("#library-footnote")).toHaveText("Scroll for more games");
+    await expectAccessible(page, "six-game library");
+  });
+
+  test("filters cards by search text and restores them when cleared", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    const search = page.locator("#game-search");
+    await search.fill("Patrol");
+    await expect(cards(page)).toHaveCount(1);
+    await expect(cards(page)).toHaveAttribute("data-game-id", "mona-patrol");
+    await expect(cards(page).locator(".game-name")).toHaveText(patrol.title);
+    await expect(page.locator("#empty-results")).toBeHidden();
+    await expect(page.locator("#game-count"), "the count stays the catalog total").toHaveText(`${catalog.length} GAMES / ALWAYS FREE`);
+    await expectAccessible(page, "filtered library");
+
+    await search.fill("no such game");
+    await expect(cards(page)).toHaveCount(0);
+    await expect(page.locator("#empty-results")).toHaveText("No games match. Try another search.");
+    await expectAccessible(page, "library without matches");
+
+    await search.fill("");
+    await expect(cards(page)).toHaveCount(catalog.length);
+    await expect(page.locator("#empty-results")).toBeHidden();
+    await expect(page.locator('#game-grid .game-card[data-game-id="mona-patrol"]')).toHaveCount(1);
+  });
+
+  test("renders both Mona Patrol cover layers in the card and the playing header", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    const card = page.locator('#game-grid .game-card[data-game-id="mona-patrol"]');
+    await card.scrollIntoViewIfNeeded();
+    await expect(card.locator(".game-name")).toHaveText(patrol.title);
+    await expect(card.locator(".game-category")).toHaveText(patrol.category);
+    await expect(card).toHaveClass(new RegExp(`\\b${patrol.accent}\\b`));
+    await expectArtwork(card, patrol, "card");
+
+    await launchGame(page, "mona-patrol");
+    await expect(page.locator("#player-title")).toHaveText(patrol.title);
+    await expect(page).toHaveTitle(`${patrol.title} · GitHub Arcade`);
+    await expectArtwork(page.locator("#cover-image"), patrol, "playing header");
+    await expect(page.locator("#instruction-content .game-repo")).toHaveAttribute("href", patrol.repository);
+    await expectAccessible(page, "playing Mona Patrol");
+  });
+
+  test("Space after launch stays in the game and Return restores the Mona Patrol card", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    const card = page.locator('#game-grid .game-card[data-game-id="mona-patrol"]');
+    await card.focus();
+    await page.keyboard.press("Enter");
+    const iframe = page.locator("#frame-host iframe");
+    await expect(iframe).toHaveCount(1);
+    await expect(iframe).toBeFocused();
+    await expect(page.frameLocator("#frame-host iframe").getByRole("heading", { name: "Stub game" })).toBeVisible();
+
+    // Space belongs to the game: it must not reach Game library (or any toolbar button) and eject the player.
+    await page.keyboard.press("Space");
+    await expect(iframe).toHaveCount(1);
+    await expect(iframe).toBeFocused();
+    await expect(page.locator("#player")).toBeVisible();
+    await expect(page.locator("#library")).toBeHidden();
+
+    await page.locator("#return-button").click();
+    await expect(iframe).toHaveCount(0);
+    await expect(page.locator("#library")).toBeVisible();
+    await expect(card).toBeFocused();
+  });
+
+  test("the search field is a focusable, unobscured keyboard stop", async ({ page }) => {
+    await stubRemoteGames(page);
+    await openLibrary(page);
+    const stops = await tabStops(page);
+    const search = stops.find((stop) => stop.target === "input#game-search");
+    expect(search, stops.map((stop) => stop.target).join(", ")).toBeDefined();
+    expect(search).toMatchObject({ focusVisible: true, outlineStyle: "solid", inViewport: true, unobscured: true });
+    expect(search.outlineWidth).toBeGreaterThanOrEqual(3);
+    expect(stops.indexOf(search), "the search field comes before the cards").toBeLessThan(stops.findIndex((stop) => stop.target.startsWith("button.game-card")));
+  });
+
+  for (const width of [320, 390]) {
+    test(`fits a ${width} px viewport with the search field visible`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 844 });
+      await stubRemoteGames(page);
+      await openLibrary(page);
+      await expect(page.locator("#search-wrap")).toBeVisible();
+      expect(await horizontalOverflow(page), "library").toEqual([]);
+      expect(await undersizedTargets(page), "library targets").toEqual([]);
+
+      await page.locator("#game-search").fill("Patrol");
+      await expect(cards(page)).toHaveCount(1);
+      expect(await horizontalOverflow(page), "filtered library").toEqual([]);
+      await expectAccessible(page, `filtered library at ${width} px`);
+
+      await launchGame(page, "mona-patrol");
+      await page.locator("#guide-toggle").click();
+      await expect(page.locator("#player-guide")).toBeVisible();
+      expect(await horizontalOverflow(page), "playing").toEqual([]);
+      expect(await undersizedTargets(page), "playing targets").toEqual([]);
+      await expectAccessible(page, `playing Mona Patrol at ${width} px`);
+
+      await page.locator("#return-button").click();
+      await expect(page.locator("#library")).toBeVisible();
+      await expect(page.locator("#game-search"), "the search text survives a round trip").toHaveValue("Patrol");
+      await expect(cards(page)).toHaveCount(1);
+    });
+  }
 });

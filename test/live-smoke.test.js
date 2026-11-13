@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ISSUE_TITLE, buildIssueBody, collectFailures, reportLiveSmoke } from "../scripts/report-live-smoke.mjs";
@@ -131,8 +131,12 @@ test("the issue body lists every failure with the run link and timestamp", () =>
 test("page checks compare status and decoded title; the catalog check enforces jdooley-clt URLs", async () => {
   assert.equal(pageTitle("<html><head><title>\n  Mona&#39;s Merge Maze </title>"), "Mona's Merge Maze");
   assert.equal(pageTitle("<title>GitHub Arcade &mdash; x</title>"), "GitHub Arcade &mdash; x", "unknown entities are left alone");
-  assert.equal(SITES.length, 6);
+  assert.equal(SITES[0].url, "https://jdooley-clt.github.io/arcade/");
   assert.ok(SITES.every((site) => site.url.startsWith("https://jdooley-clt.github.io/") && site.url.endsWith("/")));
+  const catalog = JSON.parse(await readFile(new URL("../games.json", import.meta.url), "utf8"));
+  for (const game of catalog) {
+    assert.ok(SITES.some((site) => site.url === game.url), `${game.id} needs a title check in SITES`);
+  }
 
   const respond = (status, body) => async () => new Response(body, { status, headers: { "content-type": "text/html" } });
   const ok = await checkSite({ url: BAD_URL, title: "Mona Breaker" }, { fetchImpl: respond(200, "<title>Mona Breaker</title>") });

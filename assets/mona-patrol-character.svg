@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -4 44 44" shape-rendering="crispEdges">
+  <title>Pixel Mona the Octocat driving a six-wheel pink lunar patrol rover</title>
+  <!-- Upward cyan anti-air plasma bolt -->
+  <path d="M2 2h2v5H2z" fill="#34313e"/>
+  <path d="M2 3h2v3H2z" fill="#70d6ff"/>
+  <path d="M3 3h1v2H3z" fill="#fffdf4"/>
+  <!-- Forward ruby laser pulse -->
+  <path d="M33 25h5v3h-5z" fill="#34313e"/>
+  <path d="M34 26h3v1h-3z" fill="#ff2e63"/>
+  <!-- Canonical Commit Cabinet pixel Octocat seated in open cockpit -->
+  <path d="M6 1h4v2h14V1h4v8h2v9h-2v3H9v-2H6v-2H3v-4h3v2h4v-1H5V9h3V1z" fill="#34313e"/>
+  <path d="M8 9h17v2h2v6h-2v2H8v-2H6v-6h2z" fill="#fffdf4"/>
+  <path d="M10 12h2v4h-2zM21 12h2v4h-2zM15 16h3v1h-3z" fill="#34313e"/>
+  <path d="M8 16h2v1H8zM23 16h2v1h-2z" fill="#ffb7a5"/>
+  <!-- Aqua steering column & rear anti-air plasma turret -->
+  <path d="M26 19h4v3h-4z" fill="#34313e"/>
+  <path d="M27 20h2v1h-2z" fill="#70d6ff"/>
+  <path d="M0 17h6v6H0z" fill="#34313e"/>
+  <path d="M1 18h4v4H1z" fill="#70d6ff"/>
+  <path d="M2 15h2v2H2z" fill="#5ce0a8"/>
+  <!-- Boost thruster flame -->
+  <path d="M-5 25h4v4h-4z" fill="#ffd15c"/>
+  <path d="M-6 26h2v2h-2z" fill="#ff2e63"/>
+  <!-- Sleek pink & lavender 6-wheel lunar rover hull -->
+  <path d="M-2 22h32v2h2v5H-2z" fill="#34313e"/>
+  <path d="M-1 23h30v5H-1z" fill="#f06aa7"/>
+  <path d="M0 23h27v1H0z" fill="#ffb3d1"/>
+  <path d="M6 25h17v2H6z" fill="#ded4f1"/>
+  <!-- Front laser nozzle -->
+  <path d="M30 24h3v4h-3z" fill="#34313e"/>
+  <path d="M30 25h2v2h-2z" fill="#ffd15c"/>
+  <!-- Three articulated suspension struts & spoked arcade wheels -->
+  <path d="M2 29h2v2H2zM13 29h2v2h-2zM24 29h2v2h-2z" fill="#cfd6e6"/>
+  <path d="M0 31h6v6H0zM11 31h6v6h-6zM22 31h6v6h-6z" fill="#34313e"/>
+  <path d="M2 33h2v2H2zM13 33h2v2h-2zM24 33h2v2h-2z" fill="#fffdf4"/>
+</svg>
